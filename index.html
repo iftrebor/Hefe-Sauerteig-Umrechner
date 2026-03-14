@@ -7,7 +7,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
   <link rel="icon" type="image/png" sizes="32x32" href="icons/bread-32.png" />
-  <title>Sauerteig-Planer</title>
+  <title>LM ↔ Hefe – Umrechner</title>
   <style>
     :root{
       --bg:#0f172a;
@@ -30,6 +30,7 @@
         --line:rgba(15,23,42,.12);
         --accent:#d97706;
         --accent-2:#f59e0b;
+        --ok:#16a34a;
       }
     }
     *{box-sizing:border-box}
@@ -38,7 +39,7 @@
     .app{max-width:760px;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 16px) 16px calc(env(safe-area-inset-bottom,0px) + 24px)}
     .hero{display:flex;gap:12px;align-items:center;margin-bottom:16px}
     .logo{width:44px;height:44px;border-radius:14px;background:url('icons/bread-32.png') center/24px 24px no-repeat, linear-gradient(180deg,var(--accent-2),var(--accent));box-shadow:0 10px 30px rgba(0,0,0,.18)}
-    h1{font-size:1.3rem;line-height:1.2;margin:0}
+    h1{font-size:1.28rem;line-height:1.2;margin:0}
     .sub{color:var(--muted);font-size:.95rem;margin-top:2px}
     .card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.14)}
     .card + .card{margin-top:14px}
@@ -64,7 +65,7 @@
     @media (min-width:680px){.result-grid{grid-template-columns:1fr 1fr}}
     .metric{background:var(--card-2);border:1px solid var(--line);border-radius:16px;padding:14px}
     .metric .k{font-size:.88rem;color:var(--muted);margin-bottom:4px}
-    .metric .v{font-size:1.28rem;font-weight:800}
+    .metric .v{font-size:1.22rem;font-weight:800}
     .headline{font-size:1rem;font-weight:800;margin:0 0 10px}
     .pill{display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border-radius:999px;background:rgba(34,197,94,.12);color:var(--ok);font-size:.86rem;font-weight:700}
     .status{font-size:.86rem;color:var(--muted);margin-top:10px}
@@ -78,8 +79,8 @@
     <section class="hero">
       <div class="logo" aria-hidden="true"></div>
       <div>
-        <h1>Sauerteig-Planer</h1>
-        <div class="sub">Neu aufgebaut für iPhone: ohne Slider, ohne PWA-Logik, mit robuster Touch-Bedienung.</div>
+        <h1>Lievito Madre ↔ Hefe – Umrechner</h1>
+        <div class="sub">Touch-robust neu aufgebaut. LM wird mit 60 % Hydration gerechnet.</div>
       </div>
     </section>
 
@@ -88,6 +89,7 @@
         <div>
           <label for="mehl">Gesamtmehl im Rezept (g)</label>
           <input id="mehl" type="number" min="1" step="1" value="1000" inputmode="decimal" enterkeyhint="done">
+          <div class="hint">Bezugsgröße für Hefe-% und LM-%.</div>
         </div>
         <div>
           <label for="temp">Teigtemperatur (°C)</label>
@@ -96,16 +98,16 @@
             <input id="temp" type="number" min="18" max="35" step="1" value="23" inputmode="decimal" enterkeyhint="done">
             <div class="tap step" data-action="temp-up" role="button" tabindex="0" aria-label="Temperatur erhöhen">+</div>
           </div>
-          <div class="hint">23 °C ist der Referenzpunkt. Die Temperatur wirkt auf die geschätzte Garzeit.</div>
+          <div class="hint">23 °C ist der Referenzpunkt für die Kennlinie.</div>
         </div>
       </div>
     </section>
 
     <section class="card">
-      <p class="headline">Richtung</p>
+      <p class="headline">Berechnungsmodus</p>
       <div class="seg">
-        <div id="modeA" class="tap active" data-mode="A" role="button" tabindex="0" aria-pressed="true">Hefe → Lievito Madre</div>
-        <div id="modeB" class="tap" data-mode="B" role="button" tabindex="0" aria-pressed="false">Lievito Madre → Hefe</div>
+        <div id="modeA" class="tap active" data-mode="A" role="button" tabindex="0" aria-pressed="true">Rezept mit Hefe → LM</div>
+        <div id="modeB" class="tap" data-mode="B" role="button" tabindex="0" aria-pressed="false">LM vorgeben → Garzeit</div>
       </div>
       <div class="status" id="status">Bereit.</div>
     </section>
@@ -122,7 +124,7 @@
         <div>
           <label for="hefe">Hefemenge (g)</label>
           <input id="hefe" type="number" min="0" step="0.1" value="1.5" inputmode="decimal" enterkeyhint="done">
-          <div class="hint">Die Umrechnung basiert auf deiner bisherigen Kennlinie aus dem bestehenden Projekt.</div>
+          <div class="hint">3 g Frischhefe ≈ 1 g Trockenhefe.</div>
         </div>
       </div>
     </section>
@@ -130,13 +132,14 @@
     <section id="panelB" class="card" hidden>
       <div class="grid two">
         <div>
-          <label for="lm">Lievito-Madre-Menge (g)</label>
+          <label for="lm">Lievito Madre (g)</label>
           <input id="lm" type="number" min="0" step="1" value="75" inputmode="decimal" enterkeyhint="done">
+          <div class="hint">Die LM-Menge wird als 60 % Hydration interpretiert.</div>
         </div>
         <div>
-          <div class="pill">Annahme: LM mit 50 % Hydration</div>
+          <div class="pill">LM: 62,5 % Mehl · 37,5 % Wasser</div>
           <div class="notes" style="margin-top:10px">
-            Beim Ersetzen von LM durch Hefe werden Mehl und Wasser aus dem LM separat ausgewiesen.
+            Daraus werden die Abzüge für den Hauptteig automatisch berechnet.
           </div>
         </div>
       </div>
@@ -166,7 +169,16 @@
       <div class="notes" id="outNote">Die Seite berechnet automatisch bei jeder Eingabe.</div>
     </section>
 
-    <div class="footer">Version ohne Service Worker und ohne Slider, damit wir die Touch-Probleme sauber umgehen.</div>
+    <section class="card">
+      <p class="headline">Annahmen</p>
+      <div class="notes">
+        <div>• LM-Hydration: 60 % → 62,5 % Mehl und 37,5 % Wasser.</div>
+        <div>• Temperaturkorrektur mit festem Q10 = 2,0.</div>
+        <div>• Kennlinie: 0,90 / 0,70 / 0,50 / 0,35 / 0,25 / 0,15 / 0,08 / 0,05 % Trockenhefe entsprechen 27 / 21 / 15 / 10,5 / 7,5 / 5 / 3,5 / 2,5 % LM bei 1 / 2 / 3 / 4,5 / 7 / 12 / 14 / 21 h.</div>
+      </div>
+    </section>
+
+    <div class="footer">Übernachtgare und Feinschliff können wir im nächsten Schritt sauber ergänzen.</div>
   </main>
 
   <script>
@@ -185,8 +197,11 @@
         lmPct: [27, 21, 15, 10.5, 7.5, 5, 3.5, 2.5],
         yPct: [0.9, 0.7, 0.5, 0.35, 0.25, 0.15, 0.08, 0.05]
       };
+
       const baseTemp = 23;
       const q10 = 2.0;
+      const lmFlourFactor = 1 / 1.6;
+      const lmWaterFactor = 0.6 / 1.6;
 
       function clamp(n, min, max) {
         return Math.min(max, Math.max(min, n));
@@ -272,54 +287,63 @@
         $('yeastFresh').setAttribute('aria-pressed', String(!dry));
       }
 
+      function computeFromYeast(flour, temp) {
+        const yeastG = Math.max(0, num($('hefe'), 0));
+        const dryYeastG = state.yeast === 'dry' ? yeastG : yeastG / 3;
+        const freshYeastG = state.yeast === 'fresh' ? yeastG : yeastG * 3;
+        const yeastPct = dryYeastG / flour * 100;
+        const boundedYeastPct = clamp(yeastPct, 0.05, 0.9);
+        const time23 = timeFromYeastPct(boundedYeastPct);
+        const timeAtTemp = scaleTimeToTemp(time23, temp);
+        const lmPct = lmPctFromTime(time23);
+        const lmG = flour * lmPct / 100;
+        const omitFlour = lmG * lmFlourFactor;
+        const omitWater = lmG * lmWaterFactor;
+
+        $('outTime').textContent = `${hours(timeAtTemp)} · Basis 23 °C: ${hours(time23)}`;
+        $('outMainLabel').textContent = 'Benötigte LM-Menge';
+        $('outMain').textContent = `${grams(lmG)} · ${percent(lmPct)}`;
+        $('outSide1Label').textContent = 'Weglassen Mehl';
+        $('outSide1').textContent = grams(omitFlour);
+        $('outSide2Label').textContent = 'Weglassen Wasser';
+        $('outSide2').textContent = grams(omitWater);
+        $('outNote').textContent = `Aus ${grams(state.yeast === 'dry' ? dryYeastG : freshYeastG)} ${state.yeast === 'dry' ? 'Trockenhefe' : 'Frischhefe'} ergibt sich rechnerisch ${percent(yeastPct)} Trockenhefe bezogen auf ${fmt1(flour)} g Mehl. LM wird mit 60 % Hydration auf Mehl und Wasser aufgeteilt.`;
+        setStatus('Rezept mit Hefe → LM aktualisiert.');
+      }
+
+      function computeFromLM(flour, temp) {
+        const lmG = Math.max(0, num($('lm'), 0));
+        const lmPct = lmG / flour * 100;
+        const boundedLmPct = clamp(lmPct, 2.5, 27);
+        const time23 = timeFromLMpct(boundedLmPct);
+        const timeAtTemp = scaleTimeToTemp(time23, temp);
+        const omitFlour = lmG * lmFlourFactor;
+        const omitWater = lmG * lmWaterFactor;
+        const dryYeastPct = yeastPctFromTime(time23);
+        const dryYeastG = flour * dryYeastPct / 100;
+        const freshYeastG = dryYeastG * 3;
+
+        $('outTime').textContent = `${hours(timeAtTemp)} · Basis 23 °C: ${hours(time23)}`;
+        $('outMainLabel').textContent = 'Hefe-Äquivalent';
+        $('outMain').textContent = `${grams(dryYeastG)} Trockenhefe · ${grams(freshYeastG)} Frischhefe`;
+        $('outSide1Label').textContent = 'Im LM enthaltenes Mehl';
+        $('outSide1').textContent = grams(omitFlour);
+        $('outSide2Label').textContent = 'Im LM enthaltenes Wasser';
+        $('outSide2').textContent = grams(omitWater);
+        $('outNote').textContent = `Die vorgegebene LM-Menge entspricht ${percent(lmPct)} bezogen auf ${fmt1(flour)} g Mehl. Daraus wird die Garzeit geschätzt; gleichzeitig siehst du, welche Mehl- und Wassermengen im Hauptteig entfallen.`;
+        setStatus('LM vorgeben → Garzeit aktualisiert.');
+      }
+
       function compute() {
         const flour = Math.max(1, num($('mehl'), 1000));
         const temp = clamp(num($('temp'), 23), 18, 35);
         $('temp').value = String(temp);
 
         if (state.mode === 'A') {
-          const yeastG = Math.max(0, num($('hefe'), 0));
-          const freshEquivalent = state.yeast === 'dry' ? yeastG * 3 : yeastG;
-          const dryEquivalent = state.yeast === 'dry' ? yeastG : yeastG / 3;
-          const yeastPct = (state.yeast === 'dry' ? dryEquivalent : freshEquivalent / 3) / flour * 100;
-          const time23 = timeFromYeastPct(Math.max(0.05, yeastPct));
-          const timeAtTemp = scaleTimeToTemp(time23, temp);
-          const lmPct = lmPctFromTime(time23);
-          const lmG = flour * lmPct / 100;
-          const omitFlour = lmG * 2 / 3;
-          const omitWater = lmG * 1 / 3;
-
-          $('outTime').textContent = `${hours(timeAtTemp)} · Basis 23 °C: ${hours(time23)}`;
-          $('outMainLabel').textContent = 'Benötigte LM-Menge';
-          $('outMain').textContent = `${grams(lmG)} · ${percent(lmPct)}`;
-          $('outSide1Label').textContent = 'Weglassen Mehl';
-          $('outSide1').textContent = grams(omitFlour);
-          $('outSide2Label').textContent = 'Weglassen Wasser';
-          $('outSide2').textContent = grams(omitWater);
-          $('outNote').textContent = `Gegenrechnung: ${grams(dryEquivalent)} Trockenhefe bzw. ${grams(freshEquivalent)} Frischhefe entsprechen ungefähr ${percent(yeastPct)} bezogen auf ${fmt1(flour)} g Mehl.`;
-          setStatus('Hefe → LM aktualisiert.');
-          return;
+          computeFromYeast(flour, temp);
+        } else {
+          computeFromLM(flour, temp);
         }
-
-        const lmG = Math.max(0, num($('lm'), 0));
-        const lmPct = lmG / flour * 100;
-        const time23 = timeFromLMpct(Math.max(2.5, lmPct));
-        const timeAtTemp = scaleTimeToTemp(time23, temp);
-        const yeastPct = yeastPctFromTime(time23);
-        const dryYeast = flour * yeastPct / 100;
-        const freshYeast = dryYeast * 3;
-        const omitFlour = lmG * 2 / 3;
-        const omitWater = lmG * 1 / 3;
-
-        $('outTime').textContent = `${hours(timeAtTemp)} · Basis 23 °C: ${hours(time23)}`;
-        $('outMainLabel').textContent = 'Benötigte Hefemenge';
-        $('outMain').textContent = `${grams(dryYeast)} Trockenhefe · ${grams(freshYeast)} Frischhefe`;
-        $('outSide1Label').textContent = 'Im LM enthaltenes Mehl';
-        $('outSide1').textContent = grams(omitFlour);
-        $('outSide2Label').textContent = 'Im LM enthaltenes Wasser';
-        $('outSide2').textContent = grams(omitWater);
-        $('outNote').textContent = `Die LM-Menge entspricht ungefähr ${percent(lmPct)} bezogen auf ${fmt1(flour)} g Mehl. Die Hefewerte sind Näherungen aus derselben Kennlinie wie im Ausgangsprojekt.`;
-        setStatus('LM → Hefe aktualisiert.');
       }
 
       function adjustTemp(delta) {
@@ -384,7 +408,6 @@
       syncYeastUI();
       compute();
 
-      // Vorhandene Service Worker aus alten Versionen aktiv loswerden.
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations()
           .then((registrations) => Promise.all(registrations.map((r) => r.unregister())))

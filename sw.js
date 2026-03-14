@@ -1,17 +1,2 @@
-self.addEventListener('install', (event) => {
-  self.skipWaiting();
-  event.waitUntil(Promise.resolve());
-});
-
-self.addEventListener('activate', (event) => {
-  event.waitUntil((async () => {
-    const keys = await caches.keys();
-    await Promise.all(keys.map((k) => caches.delete(k)));
-    await self.registration.unregister();
-    await self.clients.claim();
-  })());
-});
-
-self.addEventListener('fetch', () => {
-  // absichtlich leer: keine Offline-Logik, kein Caching
-});
+self.addEventListener('install',()=>self.skipWaiting());
+self.addEventListener('activate',(e)=>{e.waitUntil(self.registration.unregister().then(()=>self.clients.matchAll()).then((clients)=>clients.forEach((c)=>c.navigate(c.url))));});
