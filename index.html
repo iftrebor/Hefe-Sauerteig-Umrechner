@@ -71,17 +71,6 @@
           <div class="hint">Bezugsgröße für Hefe-% und Sauerteig-%.</div>
         </div>
         <div>
-          <label for="temp">Teigtemperatur (°C)</label>
-          <div class="stepper">
-            <div class="tap step" data-action="temp-down" role="button" tabindex="0" aria-label="Temperatur verringern">−</div>
-            <input id="temp" type="number" min="18" max="35" step="1" value="23" inputmode="decimal" enterkeyhint="done">
-            <div class="tap step" data-action="temp-up" role="button" tabindex="0" aria-label="Temperatur erhöhen">+</div>
-          </div>
-          <div class="hint">23 °C bleibt die Bezugstemperatur.</div>
-        </div>
-      </div>
-      <div class="grid two" style="margin-top:12px">
-        <div>
           <label for="hydration">Hydration Sauerteig (%)</label>
           <div class="stepper">
             <div class="tap step" data-action="hydration-down" role="button" tabindex="0" aria-label="Hydration verringern">−</div>
@@ -90,19 +79,36 @@
           </div>
           <div class="hint">Standard 60 %. Schrittweite: 10 %.</div>
         </div>
+      </div>
+      <div class="grid two" style="margin-top:12px">
         <div>
           <div class="pill" id="hydrationSplit">Sauerteig: 62,5 % Mehl · 37,5 % Wasser</div>
           <div class="notes" id="hydrationNote" style="margin-top:10px">Die Mehl- und Wasseranteile werden für die Hauptteig-Abzüge automatisch angepasst.</div>
         </div>
       </div>
-      <div style="margin-top:12px">
-        <label>Temperaturabhängigkeit</label>
-        <div class="seg three">
-          <div id="tempFactor5" class="tap" data-tempfactor="5" role="button" tabindex="0" aria-pressed="false">5 °C</div>
-          <div id="tempFactor75" class="tap active" data-tempfactor="7.5" role="button" tabindex="0" aria-pressed="true">7,5 °C</div>
-          <div id="tempFactor10" class="tap" data-tempfactor="10" role="button" tabindex="0" aria-pressed="false">10 °C</div>
+    </section>
+
+    <section class="card">
+      <p class="headline">Teigtemperatur</p>
+      <div class="grid two">
+        <div>
+          <label for="temp">Teigtemperatur (°C)</label>
+          <div class="stepper">
+            <div class="tap step" data-action="temp-down" role="button" tabindex="0" aria-label="Temperatur verringern">−</div>
+            <input id="temp" type="number" min="18" max="35" step="1" value="23" inputmode="decimal" enterkeyhint="done">
+            <div class="tap step" data-action="temp-up" role="button" tabindex="0" aria-label="Temperatur erhöhen">+</div>
+          </div>
+          <div class="hint">23 °C bleibt die Bezugstemperatur.</div>
         </div>
-        <div class="hint">Nach so vielen °C halbiert bzw. verdoppelt sich die Reifezeit.</div>
+        <div>
+          <label>Temperaturabhängigkeit</label>
+          <div class="seg three">
+            <div id="tempFactor5" class="tap" data-tempfactor="5" role="button" tabindex="0" aria-pressed="false">5 °C</div>
+            <div id="tempFactor75" class="tap active" data-tempfactor="7.5" role="button" tabindex="0" aria-pressed="true">7,5 °C</div>
+            <div id="tempFactor10" class="tap" data-tempfactor="10" role="button" tabindex="0" aria-pressed="false">10 °C</div>
+          </div>
+          <div class="hint">Nach so vielen °C halbiert bzw. verdoppelt sich die Reifezeit.</div>
+        </div>
       </div>
     </section>
 
