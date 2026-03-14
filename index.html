@@ -173,8 +173,12 @@
         </div>
         <div>
           <label for="fridgeHours">Dauer im Kühlschrank (h)</label>
-          <input id="fridgeHours" type="number" min="1" max="24" step="0.5" value="10" inputmode="decimal" enterkeyhint="done">
-          <div class="hint">Die Kühlschrankzeit wird als Zusatz zur Gesamt-Reifezeit berücksichtigt.</div>
+          <div class="stepper">
+            <div class="tap step" data-action="fridgehours-down" role="button" tabindex="0" aria-label="Kühlschrankdauer verringern">−</div>
+            <input id="fridgeHours" type="number" min="0" max="24" step="1" value="10" inputmode="decimal" enterkeyhint="done">
+            <div class="tap step" data-action="fridgehours-up" role="button" tabindex="0" aria-label="Kühlschrankdauer erhöhen">+</div>
+          </div>
+          <div class="hint">Die Kühlschrankzeit wird als Zusatz zur Gesamt-Reifezeit berücksichtigt. Schrittweite: 1 Stunde.</div>
         </div>
       </div>
     </section>
@@ -183,8 +187,12 @@
       <p class="headline">Ergebnis</p>
       <div class="result-grid">
         <div class="metric">
-          <div class="k">Geschätzte Garzeit</div>
-          <div class="v" id="outTime">–</div>
+          <div class="k">Gare Raumtemperatur</div>
+          <div class="v" id="outWarmTime">–</div>
+        </div>
+        <div class="metric">
+          <div class="k">Gare Kühlschrank</div>
+          <div class="v" id="outColdTime">–</div>
         </div>
         <div class="metric">
           <div class="k" id="outMainLabel">Benötigte LM-Menge</div>
@@ -343,22 +351,26 @@
       }
 
       function applyOvernight(time23, temp) {
+        const warmDisplayed = scaleTimeToTemp(time23, temp);
+
         if (!state.overnight) {
           return {
-            totalDisplayed: scaleTimeToTemp(time23, temp),
-            note: ''
+            warmDisplayed,
+            coldDisplayed: 0,
+            totalDisplayed: warmDisplayed,
+            note: `Gesamtdauer: ${hours(warmDisplayed)} bei Raumtemperatur.`
           };
         }
 
         const fridgeTemp = clamp(num($('fridgeTemp'), 7), 0, 15);
-        const fridgeHours = clamp(num($('fridgeHours'), 10), 1, 24);
+        const fridgeHours = clamp(num($('fridgeHours'), 0), 0, 24);
         $('fridgeTemp').value = String(fridgeTemp);
+        $('fridgeHours').value = String(fridgeHours);
 
-        const warmDisplayed = scaleTimeToTemp(time23, temp);
         const fridgeEquivalentAt23 = fridgeHours * Math.pow(2, (baseTemp - fridgeTemp) / state.tempFactor);
         const totalDisplayed = warmDisplayed + fridgeHours;
-        const note = `Übernachtgare aktiv: ${fmt1(fridgeHours)} h bei ${fmt1(fridgeTemp)} °C im Kühlschrank. Zur Orientierung entspricht das ungefähr ${hours(fridgeEquivalentAt23)} bei 23 °C. Gesamtdauer inkl. Kühlschrank: ${hours(totalDisplayed)}.`;
-        return { totalDisplayed, note };
+        const note = `Übernachtgare aktiv: ${hours(warmDisplayed)} Raumtemperatur plus ${hours(fridgeHours)} bei ${fmt1(fridgeTemp)} °C im Kühlschrank. Zur Orientierung entspricht die Kühlschrankphase ungefähr ${hours(fridgeEquivalentAt23)} bei 23 °C. Gesamtdauer: ${hours(totalDisplayed)}.`;
+        return { warmDisplayed, coldDisplayed: fridgeHours, totalDisplayed, note };
       }
 
       function computeFromYeast(flour, temp) {
@@ -374,7 +386,8 @@
         const omitFlour = lmG * lmFlourFactor;
         const omitWater = lmG * lmWaterFactor;
 
-        $('outTime').textContent = `${hours(overnightInfo.totalDisplayed)} · Basis 23 °C: ${hours(time23)}`;
+        $('outWarmTime').textContent = hours(overnightInfo.warmDisplayed);
+        $('outColdTime').textContent = hours(overnightInfo.coldDisplayed);
         $('outMainLabel').textContent = 'Benötigte LM-Menge';
         $('outMain').textContent = `${grams(lmG)} · ${percent(lmPct)}`;
         $('outSide1Label').textContent = 'Weglassen Mehl';
@@ -397,7 +410,8 @@
         const dryYeastG = flour * dryYeastPct / 100;
         const freshYeastG = dryYeastG * 3;
 
-        $('outTime').textContent = `${hours(overnightInfo.totalDisplayed)} · Basis 23 °C: ${hours(time23)}`;
+        $('outWarmTime').textContent = hours(overnightInfo.warmDisplayed);
+        $('outColdTime').textContent = hours(overnightInfo.coldDisplayed);
         $('outMainLabel').textContent = 'Hefe-Äquivalent';
         $('outMain').textContent = `${grams(dryYeastG)} Trockenhefe · ${grams(freshYeastG)} Frischhefe`;
         $('outSide1Label').textContent = 'Im LM enthaltenes Mehl';
@@ -477,6 +491,18 @@
         if (action === 'fridge-up') {
           const current = clamp(num($('fridgeTemp'), 7), 0, 15);
           $('fridgeTemp').value = String(Math.min(15, Math.round((current + 0.5) * 2) / 2));
+          compute();
+          return true;
+        }
+        if (action === 'fridgehours-down') {
+          const current = clamp(num($('fridgeHours'), 10), 0, 24);
+          $('fridgeHours').value = String(Math.max(0, Math.round(current - 1)));
+          compute();
+          return true;
+        }
+        if (action === 'fridgehours-up') {
+          const current = clamp(num($('fridgeHours'), 10), 0, 24);
+          $('fridgeHours').value = String(Math.min(24, Math.round(current + 1)));
           compute();
           return true;
         }
