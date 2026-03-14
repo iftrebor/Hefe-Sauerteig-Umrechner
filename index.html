@@ -30,6 +30,7 @@
     button{appearance:none;border:0;border-radius:12px;padding:0.78rem 1rem;font-weight:800;color:#0b0d0f;background:var(--accent);cursor:pointer;font:inherit;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
     button.secondary{background:#30363d;color:#c9d1d9}
     .out{border:1px dashed rgba(255,255,255,.18);border-radius:12px;padding:.85rem .95rem;margin-top:.7rem}
+    #panelA,#panelB,.actions,.seg,details{position:relative;z-index:2}
     .kpi{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
     @media(min-width:820px){.kpi{grid-template-columns:repeat(4,1fr)}}
     .box{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:.7rem}
@@ -37,8 +38,9 @@
     .val{font-size:1.25rem;font-weight:900}
     .hr{height:1px;background:rgba(255,255,255,.12);margin:.7rem 0}
     .small{font-size:.86rem}
-    .slider-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
-    input[type=range]{width:100%;height:36px;appearance:none;background:transparent}
+    .slider-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;position:relative;z-index:1}
+    .slider-wrap{position:relative;min-width:0}
+    input[type=range]{display:block;width:100%;height:36px;appearance:none;-webkit-appearance:none;background:transparent;position:relative;z-index:1}
     input[type=range]::-webkit-slider-runnable-track{height:6px;background:#2a3340;border-radius:999px}
     input[type=range]::-webkit-slider-thumb{appearance:none;width:28px;height:28px;border-radius:50%;margin-top:-11px;background:var(--accent);border:2px solid #0b0d0f}
     input[type=range]::-moz-range-track{height:6px;background:#2a3340;border-radius:999px}
@@ -62,7 +64,9 @@
         <div>
           <label for="temp">Teig‑Temperatur (°C) – Slider (20–35 °C)</label>
           <div class="slider-row">
-            <input id="temp" type="range" min="20" max="35" step="1" value="23" />
+            <div class="slider-wrap">
+              <input id="temp" type="range" min="20" max="35" step="1" value="23" />
+            </div>
             <div id="tempVal" aria-live="polite" style="min-width:68px;text-align:right;font-weight:700">23 °C</div>
           </div>
         </div>
@@ -299,14 +303,16 @@
   // Initial compute
   computeA(); computeB();
 
-  // SW
+  // Service Worker absichtlich deaktiviert, um iOS/PWA-Hitbox- und Cache-Probleme auszuschließen.
   if('serviceWorker' in navigator){
     window.addEventListener('load', async ()=>{
       try {
-        const reg = await navigator.serviceWorker.register('sw.js?v=4-4');
-        if (reg.waiting) reg.waiting.postMessage({type:'SKIP_WAITING'});
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map(r => r.unregister()));
+        const keys = await caches.keys();
+        await Promise.all(keys.filter(k => k.startsWith('lm-hefe-')).map(k => caches.delete(k)));
       } catch (err) {
-        console.warn('Service Worker registration failed:', err);
+        console.warn('Service Worker cleanup failed:', err);
       }
     });
   }
