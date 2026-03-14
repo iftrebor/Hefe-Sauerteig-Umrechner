@@ -156,6 +156,30 @@
     </section>
 
     <section class="card">
+      <p class="headline">Übernachtgare</p>
+      <div class="seg">
+        <div id="overnightOff" class="tap active" data-overnight="off" role="button" tabindex="0" aria-pressed="true">Aus</div>
+        <div id="overnightOn" class="tap" data-overnight="on" role="button" tabindex="0" aria-pressed="false">Ein</div>
+      </div>
+      <div id="overnightPanel" class="grid two" hidden style="margin-top:12px">
+        <div>
+          <label for="fridgeTemp">Kühlschranktemperatur (°C)</label>
+          <div class="stepper">
+            <div class="tap step" data-action="fridge-down" role="button" tabindex="0" aria-label="Kühlschranktemperatur verringern">−</div>
+            <input id="fridgeTemp" type="number" min="0" max="15" step="0.5" value="7" inputmode="decimal" enterkeyhint="done">
+            <div class="tap step" data-action="fridge-up" role="button" tabindex="0" aria-label="Kühlschranktemperatur erhöhen">+</div>
+          </div>
+          <div class="hint">Standard: 7 °C.</div>
+        </div>
+        <div>
+          <label for="fridgeHours">Dauer im Kühlschrank (h)</label>
+          <input id="fridgeHours" type="number" min="1" max="24" step="0.5" value="10" inputmode="decimal" enterkeyhint="done">
+          <div class="hint">Die Kühlschrankzeit wird als Zusatz zur Gesamt-Reifezeit berücksichtigt.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
       <p class="headline">Ergebnis</p>
       <div class="result-grid">
         <div class="metric">
@@ -186,10 +210,11 @@
         <div>• Temperaturkorrektur relativ zu 23 °C.</div>
         <div>• Temperaturabhängigkeit umschaltbar: 5 °C / 7,5 °C / 10 °C pro Halbierung bzw. Verdopplung der Reifezeit.</div>
         <div>• Kennlinie: 0,90 / 0,70 / 0,50 / 0,35 / 0,25 / 0,15 / 0,08 / 0,05 % Trockenhefe entsprechen 27 / 21 / 15 / 10,5 / 7,5 / 5 / 3,5 / 2,5 % LM bei 1 / 2 / 3 / 4,5 / 7 / 12 / 14 / 21 h.</div>
+        <div>• Übernachtgare addiert die reale Kühlschrankzeit zur Gesamtdauer und zeigt zusätzlich eine 23-°C-Äquivalenz zur Orientierung.</div>
       </div>
     </section>
 
-    <div class="footer">Übernachtgare und Feinschliff können wir im nächsten Schritt sauber ergänzen.</div>
+    <div class="footer">Übernachtgare ist jetzt enthalten; Feinschliff können wir als Nächstes angehen.</div>
   </main>
 
   <script>
@@ -201,6 +226,7 @@
         mode: 'A',
         yeast: 'dry',
         tempFactor: 7.5,
+        overnight: false,
         lastTouchTs: 0
       };
 
@@ -308,6 +334,33 @@
         });
       }
 
+      function syncOvernightUI() {
+        $('overnightOff').classList.toggle('active', !state.overnight);
+        $('overnightOn').classList.toggle('active', state.overnight);
+        $('overnightOff').setAttribute('aria-pressed', String(!state.overnight));
+        $('overnightOn').setAttribute('aria-pressed', String(state.overnight));
+        $('overnightPanel').hidden = !state.overnight;
+      }
+
+      function applyOvernight(time23, temp) {
+        if (!state.overnight) {
+          return {
+            totalDisplayed: scaleTimeToTemp(time23, temp),
+            note: ''
+          };
+        }
+
+        const fridgeTemp = clamp(num($('fridgeTemp'), 7), 0, 15);
+        const fridgeHours = clamp(num($('fridgeHours'), 10), 1, 24);
+        $('fridgeTemp').value = String(fridgeTemp);
+
+        const warmDisplayed = scaleTimeToTemp(time23, temp);
+        const fridgeEquivalentAt23 = fridgeHours * Math.pow(2, (baseTemp - fridgeTemp) / state.tempFactor);
+        const totalDisplayed = warmDisplayed + fridgeHours;
+        const note = `Übernachtgare aktiv: ${fmt1(fridgeHours)} h bei ${fmt1(fridgeTemp)} °C im Kühlschrank. Zur Orientierung entspricht das ungefähr ${hours(fridgeEquivalentAt23)} bei 23 °C. Gesamtdauer inkl. Kühlschrank: ${hours(totalDisplayed)}.`;
+        return { totalDisplayed, note };
+      }
+
       function computeFromYeast(flour, temp) {
         const yeastG = Math.max(0, num($('hefe'), 0));
         const dryYeastG = state.yeast === 'dry' ? yeastG : yeastG / 3;
@@ -315,20 +368,20 @@
         const yeastPct = dryYeastG / flour * 100;
         const boundedYeastPct = clamp(yeastPct, 0.05, 0.9);
         const time23 = timeFromYeastPct(boundedYeastPct);
-        const timeAtTemp = scaleTimeToTemp(time23, temp);
+        const overnightInfo = applyOvernight(time23, temp);
         const lmPct = lmPctFromTime(time23);
         const lmG = flour * lmPct / 100;
         const omitFlour = lmG * lmFlourFactor;
         const omitWater = lmG * lmWaterFactor;
 
-        $('outTime').textContent = `${hours(timeAtTemp)} · Basis 23 °C: ${hours(time23)}`;
+        $('outTime').textContent = `${hours(overnightInfo.totalDisplayed)} · Basis 23 °C: ${hours(time23)}`;
         $('outMainLabel').textContent = 'Benötigte LM-Menge';
         $('outMain').textContent = `${grams(lmG)} · ${percent(lmPct)}`;
         $('outSide1Label').textContent = 'Weglassen Mehl';
         $('outSide1').textContent = grams(omitFlour);
         $('outSide2Label').textContent = 'Weglassen Wasser';
         $('outSide2').textContent = grams(omitWater);
-        $('outNote').textContent = `Aus ${grams(state.yeast === 'dry' ? dryYeastG : freshYeastG)} ${state.yeast === 'dry' ? 'Trockenhefe' : 'Frischhefe'} ergibt sich rechnerisch ${percent(yeastPct)} Trockenhefe bezogen auf ${fmt1(flour)} g Mehl. LM wird mit 60 % Hydration auf Mehl und Wasser aufgeteilt.`;
+        $('outNote').textContent = `Aus ${grams(state.yeast === 'dry' ? dryYeastG : freshYeastG)} ${state.yeast === 'dry' ? 'Trockenhefe' : 'Frischhefe'} ergibt sich rechnerisch ${percent(yeastPct)} Trockenhefe bezogen auf ${fmt1(flour)} g Mehl. LM wird mit 60 % Hydration auf Mehl und Wasser aufgeteilt.${overnightInfo.note ? ' ' + overnightInfo.note : ''}`;
         setStatus(`Rezept mit Hefe → LM aktualisiert · Temperaturfaktor ${String(state.tempFactor).replace('.', ',')} °C.`);
       }
 
@@ -337,21 +390,21 @@
         const lmPct = lmG / flour * 100;
         const boundedLmPct = clamp(lmPct, 2.5, 27);
         const time23 = timeFromLMpct(boundedLmPct);
-        const timeAtTemp = scaleTimeToTemp(time23, temp);
+        const overnightInfo = applyOvernight(time23, temp);
         const omitFlour = lmG * lmFlourFactor;
         const omitWater = lmG * lmWaterFactor;
         const dryYeastPct = yeastPctFromTime(time23);
         const dryYeastG = flour * dryYeastPct / 100;
         const freshYeastG = dryYeastG * 3;
 
-        $('outTime').textContent = `${hours(timeAtTemp)} · Basis 23 °C: ${hours(time23)}`;
+        $('outTime').textContent = `${hours(overnightInfo.totalDisplayed)} · Basis 23 °C: ${hours(time23)}`;
         $('outMainLabel').textContent = 'Hefe-Äquivalent';
         $('outMain').textContent = `${grams(dryYeastG)} Trockenhefe · ${grams(freshYeastG)} Frischhefe`;
         $('outSide1Label').textContent = 'Im LM enthaltenes Mehl';
         $('outSide1').textContent = grams(omitFlour);
         $('outSide2Label').textContent = 'Im LM enthaltenes Wasser';
         $('outSide2').textContent = grams(omitWater);
-        $('outNote').textContent = `Die vorgegebene LM-Menge entspricht ${percent(lmPct)} bezogen auf ${fmt1(flour)} g Mehl. Daraus wird die Garzeit geschätzt; gleichzeitig siehst du, welche Mehl- und Wassermengen im Hauptteig entfallen.`;
+        $('outNote').textContent = `Die vorgegebene LM-Menge entspricht ${percent(lmPct)} bezogen auf ${fmt1(flour)} g Mehl. Daraus wird die Garzeit geschätzt; gleichzeitig siehst du, welche Mehl- und Wassermengen im Hauptteig entfallen.${overnightInfo.note ? ' ' + overnightInfo.note : ''}`;
         setStatus(`LM vorgeben → Garzeit aktualisiert · Temperaturfaktor ${String(state.tempFactor).replace('.', ',')} °C.`);
       }
 
@@ -381,6 +434,7 @@
         const yeast = el.dataset.yeast;
         const action = el.dataset.action;
         const tempFactor = el.dataset.tempfactor;
+        const overnight = el.dataset.overnight;
 
         if (mode) {
           state.mode = mode;
@@ -400,12 +454,30 @@
           compute();
           return true;
         }
+        if (overnight) {
+          state.overnight = overnight === 'on';
+          syncOvernightUI();
+          compute();
+          return true;
+        }
         if (action === 'temp-down') {
           adjustTemp(-1);
           return true;
         }
         if (action === 'temp-up') {
           adjustTemp(1);
+          return true;
+        }
+        if (action === 'fridge-down') {
+          const current = clamp(num($('fridgeTemp'), 7), 0, 15);
+          $('fridgeTemp').value = String(Math.max(0, Math.round((current - 0.5) * 2) / 2));
+          compute();
+          return true;
+        }
+        if (action === 'fridge-up') {
+          const current = clamp(num($('fridgeTemp'), 7), 0, 15);
+          $('fridgeTemp').value = String(Math.min(15, Math.round((current + 0.5) * 2) / 2));
+          compute();
           return true;
         }
         return false;
@@ -427,7 +499,7 @@
         }
       });
 
-      ['mehl', 'temp', 'hefe', 'lm'].forEach((id) => {
+      ['mehl', 'temp', 'hefe', 'lm', 'fridgeTemp', 'fridgeHours'].forEach((id) => {
         $(id).addEventListener('input', compute);
         $(id).addEventListener('change', compute);
       });
@@ -435,6 +507,7 @@
       syncModeUI();
       syncYeastUI();
       syncTempFactorUI();
+      syncOvernightUI();
       compute();
 
       if ('serviceWorker' in navigator) {
