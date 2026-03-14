@@ -9,7 +9,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="icons/bread-32.png" />
   <title>LM ↔ Hefe – Umrechner</title>
   <style>
-    :root{--bg:#0b0d0f;--card:#121419;--muted:#9aa4b2;--fg:#eef2f6;--accent:#4ea1ff;--ok:#3ddc97;--warn:#ffb86b}
+    :root{--bg:#0b0d0f;--card:#121419;--muted:#9aa4b2;--fg:#eef2f6;--accent:#4ea1ff}
     @media (prefers-color-scheme: light){:root{--bg:#ffffff;--card:#f6f8fa;--muted:#57606a;--fg:#0f1720;--accent:#0969da}}
     html,body{background:var(--bg);color:var(--fg);margin:0;font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,"DejaVu Sans",Arial;-webkit-text-size-adjust:100%}
     .wrap{max-width:980px;margin:0 auto;padding:calc(env(safe-area-inset-top,0) + 12px) 16px 16px}
@@ -19,18 +19,17 @@
     .muted{color:var(--muted)}
     .card{background:var(--card);border:1px solid rgba(255,255,255,.09);border-radius:14px;padding:14px;box-shadow:0 6px 20px rgba(0,0,0,.25)}
     label{display:block;font-size:.92rem;margin:.35rem 0 .2rem;color:var(--muted)}
-    input[type=number]{width:100%;padding:0.78rem 0.85rem;border:1px solid rgba(255,255,255,.18);border-radius:12px;background:transparent;color:var(--fg);font-size:17px;font-weight:600}
+    input[type=number]{width:100%;padding:0.78rem 0.85rem;border:1px solid rgba(255,255,255,.18);border-radius:12px;background:transparent;color:var(--fg);font-size:17px;font-weight:600;box-sizing:border-box}
     input::placeholder{color:#8b949e}
     .grid{display:grid;grid-template-columns:1fr;gap:12px}
     @media(min-width:760px){.grid{grid-template-columns:1fr 1fr}}
-    .seg{display:flex;gap:8px;margin:10px 0}
-    .seg .seg-btn{flex:1;text-align:center;padding:0.78rem;border-radius:12px;border:1px solid rgba(255,255,255,.18);cursor:pointer;user-select:none;appearance:none;background:transparent;color:var(--fg);font:inherit;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+    .seg{display:flex;gap:8px;margin:10px 0;flex-wrap:wrap}
+    .seg .seg-btn{flex:1;text-align:center;padding:0.78rem;border-radius:12px;border:1px solid rgba(255,255,255,.18);cursor:pointer;user-select:none;appearance:none;background:transparent;color:var(--fg);font:inherit;touch-action:manipulation;-webkit-tap-highlight-color:transparent;min-width:0}
     .seg .seg-btn[aria-pressed="true"], .seg .seg-btn[aria-selected="true"]{background:linear-gradient(180deg, rgba(78,161,255,.25), rgba(78,161,255,.05));border-color:rgba(78,161,255,.5)}
     .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-    button{appearance:none;border:0;border-radius:12px;padding:0.78rem 1rem;font-weight:800;color:#0b0d0f;background:var(--accent);cursor:pointer;font:inherit;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+    button{appearance:none;border:0;border-radius:12px;padding:0.78rem 1rem;color:#0b0d0f;background:var(--accent);cursor:pointer;font:inherit;font-weight:700;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
     button.secondary{background:#30363d;color:#c9d1d9}
     .out{border:1px dashed rgba(255,255,255,.18);border-radius:12px;padding:.85rem .95rem;margin-top:.7rem}
-    #panelA,#panelB,.actions,.seg,details{position:relative;z-index:2}
     .kpi{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
     @media(min-width:820px){.kpi{grid-template-columns:repeat(4,1fr)}}
     .box{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:.7rem}
@@ -38,13 +37,6 @@
     .val{font-size:1.25rem;font-weight:900}
     .hr{height:1px;background:rgba(255,255,255,.12);margin:.7rem 0}
     .small{font-size:.86rem}
-    .slider-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;position:relative;z-index:1}
-    .slider-wrap{position:relative;min-width:0}
-    input[type=range]{display:block;width:100%;height:36px;appearance:none;-webkit-appearance:none;background:transparent;position:relative;z-index:1}
-    input[type=range]::-webkit-slider-runnable-track{height:6px;background:#2a3340;border-radius:999px}
-    input[type=range]::-webkit-slider-thumb{appearance:none;width:28px;height:28px;border-radius:50%;margin-top:-11px;background:var(--accent);border:2px solid #0b0d0f}
-    input[type=range]::-moz-range-track{height:6px;background:#2a3340;border-radius:999px}
-    input[type=range]::-moz-range-thumb{width:28px;height:28px;border-radius:50%;background:var(--accent);border:2px solid #0b0d0f}
     @media (min-width:430px) and (max-width:460px){ .wrap{max-width:600px} }
   </style>
 </head>
@@ -62,24 +54,10 @@
           <input id="mehl" type="number" inputmode="decimal" min="1" step="1" value="1000" enterkeyhint="done" />
         </div>
         <div>
-          <label for="temp">Teig‑Temperatur (°C) – Slider (20–35 °C)</label>
-          <div class="slider-row">
-            <div class="slider-wrap">
-              <input id="temp" type="range" min="20" max="35" step="1" value="23" />
-            </div>
-            <div id="tempVal" aria-live="polite" style="min-width:68px;text-align:right;font-weight:700">23 °C</div>
-          </div>
+          <label for="temp">Teig‑Temperatur (°C)</label>
+          <input id="temp" type="number" inputmode="decimal" min="10" max="35" step="1" value="23" enterkeyhint="done" />
+          <div class="small muted" style="margin-top:6px">Einfacher Zahleneingang statt Slider. Standardmodell mit festem Q10 = 2,0.</div>
         </div>
-      </div>
-
-      <div>
-        <label>Temperatur‑Faktor Q10</label>
-        <div class="seg" role="group" aria-label="Q10‑Faktor">
-          <button type="button" id="q10Con" class="seg-btn" aria-pressed="false">Konservativ</button>
-          <button type="button" id="q10Std" class="seg-btn" aria-pressed="true">Standard</button>
-          <button type="button" id="q10Agg" class="seg-btn" aria-pressed="false">Aggressiv</button>
-        </div>
-        <div class="small muted">Q10 bestimmt, wie schnell die <em>Garzeit</em> je +10 °C sinkt: <code>t = t<sub>23°C</sub> × Q10<sup>(23−T)/10</sup></code>. Richtwerte: 1,7 / 2,0 / 2,3.</div>
       </div>
 
       <div class="seg" role="tablist" aria-label="Berechnungsmodus">
@@ -143,7 +121,7 @@
       <details style="margin-top:12px">
         <summary><strong>Methodik & Annahmen</strong> (aufklappen)</summary>
         <ul class="small">
-          <li><strong>Temperatur‑Basis:</strong> 23 °C. Zeit‑Skalierung über Q10 (Standard 2.0): <code>t = t<sub>23°C</sub> × Q10<sup>(23−T)/10</sup></code>.</li>
+          <li><strong>Temperatur‑Basis:</strong> 23 °C. Zeit‑Skalierung über festes Q10 = 2,0: <code>t = t<sub>23°C</sub> × 2,0<sup>(23−T)/10</sup></code>.</li>
           <li><strong>LM Hydration: 60 %</strong> (≈ 62,5 % Mehl / 37,5 % Wasser) → diese Anteile im Hauptteig abziehen.</li>
           <li>Mittelwerte je Band (Hefe% ↔ LM% ↔ Zeit): (0,90 ↔ 27 ↔ 1 h), (0,70 ↔ 21 ↔ 2 h), (0,50 ↔ 15 ↔ 3 h), (0,35 ↔ 10,5 ↔ 4,5 h), (0,25 ↔ 7,5 ↔ 7 h), (0,15 ↔ 5 ↔ 12 h), (0,08 ↔ 3,5 ↔ 14 h), (0,05 ↔ 2,5 ↔ 21 h).</li>
           <li>Frischhefe → Trockenhefe = 3 : 1 (3 g Frischhefe ≈ 1 g Trockenhefe).</li>
@@ -159,80 +137,77 @@
   const $ = (id)=>document.getElementById(id);
   const save=(k,v)=>localStorage.setItem('lm_'+k,v);
   const load=(k)=>localStorage.getItem('lm_'+k);
+  const Q10 = 2.0;
+  const baseT = 23.0;
 
-  // Temperature slider label
-  const tempEl = $('#temp');
-  const tempValEl = $('#tempVal');
-  function updateTempLabel(){ tempValEl.textContent = tempEl.value + ' °C'; }
-  if (load('temp')) tempEl.value = load('temp');
-  updateTempLabel();
-  tempEl.addEventListener('input', ()=>{ save('temp', tempEl.value); updateTempLabel(); computeA(); computeB(); });
+  ['mehl','temp','hefeG','lmG','fridgeT','fridgeH'].forEach(id=>{
+    const el=$(id);
+    if(!el) return;
+    const stored = load(id);
+    if(stored !== null) el.value = stored;
+    el.addEventListener('input',()=>{
+      save(id,el.value);
+      computeA();
+      computeB();
+    });
+  });
 
-  // Q10 segmented
-  let Q10 = parseFloat(load('Q10')) || 2.0;
-  function setQ10(mode){
-    const map={con:1.7,std:2.0,agg:2.3}; Q10 = map[mode]; save('Q10',Q10);
-    $('#q10Con').setAttribute('aria-pressed', mode==='con');
-    $('#q10Std').setAttribute('aria-pressed', mode==='std');
-    $('#q10Agg').setAttribute('aria-pressed', mode==='agg');
-    computeA(); computeB();
-  }
-  $('#q10Con').addEventListener('click', ()=>setQ10('con'));
-  $('#q10Std').addEventListener('click', ()=>setQ10('std'));
-  $('#q10Agg').addEventListener('click', ()=>setQ10('agg'));
-  if (Q10===1.7) setQ10('con'); else if (Q10===2.3) setQ10('agg'); else setQ10('std');
-
-  // Tabs
   function activateTab(which){
-    const isA = which==='A'; save('tab', which);
+    const isA = which==='A';
+    save('tab', which);
     $('#tabA').setAttribute('aria-selected', String(isA));
     $('#tabB').setAttribute('aria-selected', String(!isA));
     $('#tabA').tabIndex = isA ? 0 : -1;
     $('#tabB').tabIndex = isA ? -1 : 0;
-    $('#panelA').hidden = !isA; $('#panelB').hidden = isA;
+    $('#panelA').hidden = !isA;
+    $('#panelB').hidden = isA;
   }
   $('#tabA').addEventListener('click', ()=>activateTab('A'));
   $('#tabB').addEventListener('click', ()=>activateTab('B'));
   activateTab(load('tab')||'A');
 
-  // Yeast segmented
   function setYeast(art){
-    const isDry = art==='dry'; save('yeastArt', art);
-    $('#btnDry').setAttribute('aria-pressed', isDry);
-    $('#btnFresh').setAttribute('aria-pressed', !isDry);
+    const isDry = art==='dry';
+    save('yeastArt', art);
+    $('#btnDry').setAttribute('aria-pressed', String(isDry));
+    $('#btnFresh').setAttribute('aria-pressed', String(!isDry));
     computeA();
   }
   $('#btnDry').addEventListener('click', ()=>setYeast('dry'));
   $('#btnFresh').addEventListener('click', ()=>setYeast('fresh'));
   setYeast(load('yeastArt')||'dry');
 
-  // Overnight toggle
   let overnight = (load('overnight')==='1');
   function setOvernight(on){
-    overnight = !!on; save('overnight', on? '1':'0');
-    $('#overnightToggle').setAttribute('aria-pressed', overnight);
+    overnight = !!on;
+    save('overnight', on ? '1' : '0');
+    $('#overnightToggle').setAttribute('aria-pressed', String(overnight));
     const det = $('#overnightDetails');
     if(overnight){ det.hidden=false; det.open=true; } else { det.open=false; det.hidden=true; }
-    computeA(); computeB();
+    computeA();
+    computeB();
   }
   $('#overnightToggle').addEventListener('click', ()=> setOvernight(!overnight));
   setOvernight(overnight);
 
-  // Persist inputs
-  ['mehl','hefeG','lmG','fridgeT','fridgeH'].forEach(id=>{
-    const el=$(id); if(load(id)) el.value=load(id);
-    el&&el.addEventListener('input',()=>{ save(id,el.value); computeA(); computeB(); });
-  });
-
-  // Core math
   const knots={times:[1,2,3,4.5,7,12,14,21], lmPct:[27,21,15,10.5,7.5,5,3.5,2.5], yPct:[0.9,0.7,0.5,0.35,0.25,0.15,0.08,0.05]};
-  function linInterp(x,xs,ys){ if(x<=xs[0])return ys[0]; if(x>=xs[xs.length-1])return ys[ys.length-1]; for(let i=0;i<xs.length-1;i++){const x0=xs[i],x1=xs[i+1]; if(x>=x0&&x<=x1){const t=(x-x0)/(x1-x0); return ys[i]+t*(ys[i+1]-ys[i]);}} return ys[ys.length-1]; }
+  function linInterp(x,xs,ys){
+    if(x<=xs[0]) return ys[0];
+    if(x>=xs[xs.length-1]) return ys[ys.length-1];
+    for(let i=0;i<xs.length-1;i++){
+      const x0=xs[i],x1=xs[i+1];
+      if(x>=x0&&x<=x1){
+        const t=(x-x0)/(x1-x0);
+        return ys[i]+t*(ys[i+1]-ys[i]);
+      }
+    }
+    return ys[ys.length-1];
+  }
   const timeFromLMpct =(p)=>linInterp(p,[...knots.lmPct].reverse(),[...knots.times].reverse());
   const timeFromYeastPct=(p)=>linInterp(p,[...knots.yPct].reverse(),[...knots.times].reverse());
   const lmPctFromTime =(t)=>linInterp(t,knots.times,knots.lmPct);
   const yeastPctFromTime=(t)=>linInterp(t,knots.times,knots.yPct);
 
-  const baseT=23.0;
   const scaleTime=(t,T)=> t * Math.pow(Q10,(baseT - T)/10.0);
   const fmtPct=(v)=> (Math.round(v*100)/100).toFixed(2).replace('.', ',')+' %';
   const fmtG  =(v)=> (Math.round(v*10)/10).toFixed(1).replace('.', ',')+' g';
@@ -252,11 +227,21 @@
   }
 
   function computeA(){
-    const mehl=parseFloat($('#mehl').value); const hefeG=parseFloat($('#hefeG').value); const art=(load('yeastArt')||'dry'); const out=$('#outA');
-    if(!(mehl>0)||!(hefeG>0)){out.style.display='none';return;}
-    const dry= art==='fresh'? hefeG/3:hefeG; const yPct=100*dry/mehl; const time23=timeFromYeastPct(yPct); const T=parseFloat($('#temp').value||baseT);
-    const lmPct=lmPctFromTime(time23); const lmG=mehl*lmPct/100; const abM=lmG*0.625, abW=lmG*0.375;
-    const yPctCheck=yeastPctFromTime(time23); const yDry=yPctCheck/100*mehl; const yFresh=yDry*3;
+    const mehl=parseFloat($('#mehl').value);
+    const hefeG=parseFloat($('#hefeG').value);
+    const art=(load('yeastArt')||'dry');
+    const out=$('#outA');
+    if(!(mehl>0)||!(hefeG>0)){ out.style.display='none'; return; }
+    const dry= art==='fresh' ? hefeG/3 : hefeG;
+    const yPct=100*dry/mehl;
+    const time23=timeFromYeastPct(yPct);
+    const T=parseFloat($('#temp').value||baseT);
+    const lmPct=lmPctFromTime(time23);
+    const lmG=mehl*lmPct/100;
+    const abM=lmG*0.625, abW=lmG*0.375;
+    const yPctCheck=yeastPctFromTime(time23);
+    const yDry=yPctCheck/100*mehl;
+    const yFresh=yDry*3;
 
     let html = `
       <div class="kpi">
@@ -269,14 +254,22 @@
       <div class="small muted">Ausgangs‑Hefe: ${art==='fresh'?'Frischhefe':'Trockenhefe'} → trockenäquivalent ${fmtG(dry)} (${fmtPct(yPct)}). Gegenrechnung (23 °C): Trockenhefe ≈ ${fmtG(yDry)} / Frischhefe ≈ ${fmtG(yFresh)}.</div>`;
 
     html = addOvernightSection(html, time23);
-    out.innerHTML = html; out.style.display='block';
+    out.innerHTML = html;
+    out.style.display='block';
   }
 
   function computeB(){
-    const mehl=parseFloat($('#mehl').value); const lmG=parseFloat($('#lmG').value); const out=$('#outB');
-    if(!(mehl>0)||!(lmG>0)){out.style.display='none';return;}
-    const lmPct=100*lmG/mehl; const time23=timeFromLMpct(lmPct); const T=parseFloat($('#temp').value||baseT);
-    const abM=lmG*0.625, abW=lmG*0.375; const yPct=yeastPctFromTime(time23); const yDry=yPct/100*mehl; const yFresh=yDry*3;
+    const mehl=parseFloat($('#mehl').value);
+    const lmG=parseFloat($('#lmG').value);
+    const out=$('#outB');
+    if(!(mehl>0)||!(lmG>0)){ out.style.display='none'; return; }
+    const lmPct=100*lmG/mehl;
+    const time23=timeFromLMpct(lmPct);
+    const T=parseFloat($('#temp').value||baseT);
+    const abM=lmG*0.625, abW=lmG*0.375;
+    const yPct=yeastPctFromTime(time23);
+    const yDry=yPct/100*mehl;
+    const yFresh=yDry*3;
 
     let html = `
       <div class="kpi">
@@ -289,10 +282,10 @@
       <div class="small muted">Gegenrechnung (23 °C): Trockenhefe ≈ ${fmtG(yDry)} (${fmtPct(yPct)}), Frischhefe ≈ ${fmtG(yFresh)}.</div>`;
 
     html = addOvernightSection(html, time23);
-    out.innerHTML = html; out.style.display='block';
+    out.innerHTML = html;
+    out.style.display='block';
   }
 
-  // Buttons
   $('#btnA').addEventListener('click', computeA);
   $('#btnB').addEventListener('click', computeB);
   $('#btnResetA').addEventListener('click',()=>{ $('#hefeG').value=''; localStorage.removeItem('lm_hefeG'); $('#outA').style.display='none';});
@@ -300,10 +293,9 @@
   $('#btnCopyA').addEventListener('click',()=>{ navigator.clipboard?.writeText($('#outA').innerText.trim()); });
   $('#btnCopyB').addEventListener('click',()=>{ navigator.clipboard?.writeText($('#outB').innerText.trim()); });
 
-  // Initial compute
-  computeA(); computeB();
+  computeA();
+  computeB();
 
-  // Service Worker absichtlich deaktiviert, um iOS/PWA-Hitbox- und Cache-Probleme auszuschließen.
   if('serviceWorker' in navigator){
     window.addEventListener('load', async ()=>{
       try {
