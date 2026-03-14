@@ -52,6 +52,7 @@
     }
     input[type="number"]:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(245,158,11,.18)}
     .seg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    #tempFactorSeg{grid-template-columns:1fr 1fr 1fr}
     .tap{
       min-height:52px;border-radius:16px;border:1px solid var(--line);background:var(--card-2);display:flex;align-items:center;justify-content:center;
       padding:12px 14px;font-weight:750;text-align:center;user-select:none;-webkit-user-select:none;
@@ -100,6 +101,15 @@
           </div>
           <div class="hint">23 °C ist der Referenzpunkt für die Kennlinie.</div>
         </div>
+      </div>
+      <div style="margin-top:12px">
+        <label>Temperaturabhängigkeit</label>
+        <div class="seg" id="tempFactorSeg">
+          <div id="tempFactor5" class="tap" data-tempfactor="5" role="button" tabindex="0" aria-pressed="false">5 °C</div>
+          <div id="tempFactor75" class="tap active" data-tempfactor="7.5" role="button" tabindex="0" aria-pressed="true">7,5 °C</div>
+          <div id="tempFactor10" class="tap" data-tempfactor="10" role="button" tabindex="0" aria-pressed="false">10 °C</div>
+        </div>
+        <div class="hint">Legt fest, nach wie vielen °C sich die Reifezeit halbiert bzw. verdoppelt. 23 °C bleibt die Bezugstemperatur.</div>
       </div>
     </section>
 
@@ -173,7 +183,8 @@
       <p class="headline">Annahmen</p>
       <div class="notes">
         <div>• LM-Hydration: 60 % → 62,5 % Mehl und 37,5 % Wasser.</div>
-        <div>• Temperaturkorrektur mit festem Q10 = 2,0.</div>
+        <div>• Temperaturkorrektur relativ zu 23 °C.</div>
+        <div>• Temperaturabhängigkeit umschaltbar: 5 °C / 7,5 °C / 10 °C pro Halbierung bzw. Verdopplung der Reifezeit.</div>
         <div>• Kennlinie: 0,90 / 0,70 / 0,50 / 0,35 / 0,25 / 0,15 / 0,08 / 0,05 % Trockenhefe entsprechen 27 / 21 / 15 / 10,5 / 7,5 / 5 / 3,5 / 2,5 % LM bei 1 / 2 / 3 / 4,5 / 7 / 12 / 14 / 21 h.</div>
       </div>
     </section>
@@ -189,6 +200,7 @@
       const state = {
         mode: 'A',
         yeast: 'dry',
+        tempFactor: 7.5,
         lastTouchTs: 0
       };
 
@@ -199,7 +211,6 @@
       };
 
       const baseTemp = 23;
-      const q10 = 2.0;
       const lmFlourFactor = 1 / 1.6;
       const lmWaterFactor = 0.6 / 1.6;
 
@@ -262,7 +273,7 @@
       }
 
       function scaleTimeToTemp(timeAt23, temp) {
-        return timeAt23 * Math.pow(q10, (baseTemp - temp) / 10);
+        return timeAt23 * Math.pow(2, (baseTemp - temp) / state.tempFactor);
       }
 
       function setStatus(text) {
@@ -287,6 +298,16 @@
         $('yeastFresh').setAttribute('aria-pressed', String(!dry));
       }
 
+      function syncTempFactorUI() {
+        const val = String(state.tempFactor);
+        ['5', '7.5', '10'].forEach((v) => {
+          const el = $('tempFactor' + v.replace('.', ''));
+          const active = v === val;
+          el.classList.toggle('active', active);
+          el.setAttribute('aria-pressed', String(active));
+        });
+      }
+
       function computeFromYeast(flour, temp) {
         const yeastG = Math.max(0, num($('hefe'), 0));
         const dryYeastG = state.yeast === 'dry' ? yeastG : yeastG / 3;
@@ -308,7 +329,7 @@
         $('outSide2Label').textContent = 'Weglassen Wasser';
         $('outSide2').textContent = grams(omitWater);
         $('outNote').textContent = `Aus ${grams(state.yeast === 'dry' ? dryYeastG : freshYeastG)} ${state.yeast === 'dry' ? 'Trockenhefe' : 'Frischhefe'} ergibt sich rechnerisch ${percent(yeastPct)} Trockenhefe bezogen auf ${fmt1(flour)} g Mehl. LM wird mit 60 % Hydration auf Mehl und Wasser aufgeteilt.`;
-        setStatus('Rezept mit Hefe → LM aktualisiert.');
+        setStatus(`Rezept mit Hefe → LM aktualisiert · Temperaturfaktor ${String(state.tempFactor).replace('.', ',')} °C.`);
       }
 
       function computeFromLM(flour, temp) {
@@ -331,7 +352,7 @@
         $('outSide2Label').textContent = 'Im LM enthaltenes Wasser';
         $('outSide2').textContent = grams(omitWater);
         $('outNote').textContent = `Die vorgegebene LM-Menge entspricht ${percent(lmPct)} bezogen auf ${fmt1(flour)} g Mehl. Daraus wird die Garzeit geschätzt; gleichzeitig siehst du, welche Mehl- und Wassermengen im Hauptteig entfallen.`;
-        setStatus('LM vorgeben → Garzeit aktualisiert.');
+        setStatus(`LM vorgeben → Garzeit aktualisiert · Temperaturfaktor ${String(state.tempFactor).replace('.', ',')} °C.`);
       }
 
       function compute() {
@@ -359,6 +380,7 @@
         const mode = el.dataset.mode;
         const yeast = el.dataset.yeast;
         const action = el.dataset.action;
+        const tempFactor = el.dataset.tempfactor;
 
         if (mode) {
           state.mode = mode;
@@ -369,6 +391,12 @@
         if (yeast) {
           state.yeast = yeast;
           syncYeastUI();
+          compute();
+          return true;
+        }
+        if (tempFactor) {
+          state.tempFactor = parseFloat(tempFactor);
+          syncTempFactorUI();
           compute();
           return true;
         }
@@ -406,6 +434,7 @@
 
       syncModeUI();
       syncYeastUI();
+      syncTempFactorUI();
       compute();
 
       if ('serviceWorker' in navigator) {
