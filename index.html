@@ -7,7 +7,7 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
   <link rel="icon" type="image/png" sizes="32x32" href="icons/bread-32.png" />
-  <title>Sauerteig ↔ Hefe – Umrechner</title>
+  <title>LM ↔ Hefe – Umrechner</title>
   <style>
     :root{
       --bg:#0f172a;
@@ -20,6 +20,19 @@
       --accent-2:#fbbf24;
       --ok:#22c55e;
     }
+    @media (prefers-color-scheme: light){
+      :root{
+        --bg:#f8fafc;
+        --card:#ffffff;
+        --card-2:#f1f5f9;
+        --text:#0f172a;
+        --muted:#475569;
+        --line:rgba(15,23,42,.12);
+        --accent:#d97706;
+        --accent-2:#f59e0b;
+        --ok:#16a34a;
+      }
+    }
     *{box-sizing:border-box}
     html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-text-size-adjust:100%}
     body{min-height:100dvh}
@@ -31,14 +44,20 @@
     .card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.14)}
     .card + .card{margin-top:14px}
     .grid{display:grid;gap:12px}
-    .grid.two{grid-template-columns:1fr 1fr}
-    @media (max-width:679px){.grid.two{grid-template-columns:1fr}}
+    @media (min-width:680px){.grid.two{grid-template-columns:1fr 1fr}}
     label{display:block;font-size:.92rem;color:var(--muted);margin:0 0 6px}
-    input[type="number"]{width:100%;height:54px;border-radius:16px;border:1px solid var(--line);background:var(--card-2);color:var(--text);padding:0 14px;font-size:18px;font-weight:650;outline:none}
+    input[type="number"]{
+      width:100%;height:54px;border-radius:16px;border:1px solid var(--line);background:var(--card-2);color:var(--text);
+      padding:0 14px;font-size:18px;font-weight:650;outline:none;
+    }
     input[type="number"]:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(245,158,11,.18)}
     .seg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .seg.three{grid-template-columns:1fr 1fr 1fr}
-    .tap{min-height:52px;border-radius:16px;border:1px solid var(--line);background:var(--card-2);display:flex;align-items:center;justify-content:center;padding:12px 14px;font-weight:750;text-align:center;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation;cursor:pointer}
+    #tempFactorSeg{grid-template-columns:1fr 1fr 1fr}
+    .tap{
+      min-height:52px;border-radius:16px;border:1px solid var(--line);background:var(--card-2);display:flex;align-items:center;justify-content:center;
+      padding:12px 14px;font-weight:750;text-align:center;user-select:none;-webkit-user-select:none;
+      -webkit-tap-highlight-color: transparent; touch-action: manipulation; cursor:pointer;
+    }
     .tap.active{background:linear-gradient(180deg, rgba(245,158,11,.22), rgba(245,158,11,.10));border-color:rgba(245,158,11,.7)}
     .stepper{display:grid;grid-template-columns:56px 1fr 56px;gap:10px;align-items:center}
     .step{font-size:1.4rem}
@@ -50,13 +69,9 @@
     .metric .v{font-size:1.22rem;font-weight:800}
     .headline{font-size:1rem;font-weight:800;margin:0 0 10px}
     .pill{display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border-radius:999px;background:rgba(34,197,94,.12);color:var(--ok);font-size:.86rem;font-weight:700}
+    .status{font-size:.86rem;color:var(--muted);margin-top:10px}
+    .divider{height:1px;background:var(--line);margin:14px 0}
     .notes{font-size:.9rem;color:var(--muted)}
-    details.fold{padding:0}
-    details.fold > summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-size:1rem;font-weight:800;padding:16px}
-    details.fold > summary::-webkit-details-marker{display:none}
-    details.fold > summary::after{content:'+';font-size:1.2rem;color:var(--muted)}
-    details.fold[open] > summary::after{content:'−'}
-    .fold-body{padding:0 16px 16px}
     .footer{margin-top:16px;font-size:.82rem;color:var(--muted);text-align:center}
   </style>
 </head>
@@ -65,8 +80,8 @@
     <section class="hero">
       <div class="logo" aria-hidden="true"></div>
       <div>
-        <h1>Sauerteig ↔ Hefe – Umrechner</h1>
-        <div class="sub">Für Sauerteig mit frei einstellbarer Hydration und optionaler Übernachtgare.</div>
+        <h1>Lievito Madre ↔ Hefe – Umrechner</h1>
+        <div class="sub">Touch-robust neu aufgebaut. LM wird mit 60 % Hydration gerechnet.</div>
       </div>
     </section>
 
@@ -75,51 +90,36 @@
         <div>
           <label for="mehl">Gesamtmehl im Rezept (g)</label>
           <input id="mehl" type="number" min="1" step="1" value="1000" inputmode="decimal" enterkeyhint="done">
-          <div class="hint">Bezugsgröße für Hefe-% und Sauerteig-%.</div>
+          <div class="hint">Bezugsgröße für Hefe-% und LM-%.</div>
         </div>
         <div>
-          <label for="hydration">Hydration Sauerteig (%)</label>
+          <label for="temp">Teigtemperatur (°C)</label>
           <div class="stepper">
-            <div class="tap step" data-action="hydration-down" role="button" tabindex="0" aria-label="Hydration verringern">−</div>
-            <input id="hydration" type="number" min="0" max="200" step="10" value="60" inputmode="decimal" enterkeyhint="done">
-            <div class="tap step" data-action="hydration-up" role="button" tabindex="0" aria-label="Hydration erhöhen">+</div>
+            <div class="tap step" data-action="temp-down" role="button" tabindex="0" aria-label="Temperatur verringern">−</div>
+            <input id="temp" type="number" min="18" max="35" step="1" value="23" inputmode="decimal" enterkeyhint="done">
+            <div class="tap step" data-action="temp-up" role="button" tabindex="0" aria-label="Temperatur erhöhen">+</div>
           </div>
-          <div class="hint" id="hydrationSplit">Sauerteig: 62,5 % Mehl · 37,5 % Wasser</div>
+          <div class="hint">23 °C ist der Referenzpunkt für die Kennlinie.</div>
         </div>
+      </div>
+      <div style="margin-top:12px">
+        <label>Temperaturabhängigkeit</label>
+        <div class="seg" id="tempFactorSeg">
+          <div id="tempFactor5" class="tap" data-tempfactor="5" role="button" tabindex="0" aria-pressed="false">5 °C</div>
+          <div id="tempFactor75" class="tap active" data-tempfactor="7.5" role="button" tabindex="0" aria-pressed="true">7,5 °C</div>
+          <div id="tempFactor10" class="tap" data-tempfactor="10" role="button" tabindex="0" aria-pressed="false">10 °C</div>
+        </div>
+        <div class="hint">Legt fest, nach wie vielen °C sich die Reifezeit halbiert bzw. verdoppelt. 23 °C bleibt die Bezugstemperatur.</div>
       </div>
     </section>
-
-    <details class="card fold" id="tempCard">
-      <summary>Teigtemperatur</summary>
-      <div class="fold-body">
-        <div class="grid two">
-          <div>
-            <label for="temp">Teigtemperatur (°C)</label>
-            <div class="stepper">
-              <div class="tap step" data-action="temp-down" role="button" tabindex="0" aria-label="Temperatur verringern">−</div>
-              <input id="temp" type="number" min="18" max="35" step="1" value="23" inputmode="decimal" enterkeyhint="done">
-              <div class="tap step" data-action="temp-up" role="button" tabindex="0" aria-label="Temperatur erhöhen">+</div>
-            </div>
-            <div class="hint">23 °C ist die Bezugstemperatur.</div>
-          </div>
-          <div>
-            <label>Temperaturabhängigkeit</label>
-            <div class="seg three" id="tempFactorSeg">
-              <div id="tempFactor5" class="tap" data-tempfactor="5" role="button" tabindex="0" aria-pressed="false">5 °C</div>
-              <div id="tempFactor75" class="tap active" data-tempfactor="7.5" role="button" tabindex="0" aria-pressed="true">7,5 °C</div>
-              <div id="tempFactor10" class="tap" data-tempfactor="10" role="button" tabindex="0" aria-pressed="false">10 °C</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </details>
 
     <section class="card">
       <p class="headline">Berechnungsmodus</p>
       <div class="seg">
-        <div id="modeA" class="tap active" data-mode="A" role="button" tabindex="0" aria-pressed="true">Rezept mit Hefe → Sauerteig</div>
-        <div id="modeB" class="tap" data-mode="B" role="button" tabindex="0" aria-pressed="false">Sauerteig vorgeben → Garzeit</div>
+        <div id="modeA" class="tap active" data-mode="A" role="button" tabindex="0" aria-pressed="true">Rezept mit Hefe → LM</div>
+        <div id="modeB" class="tap" data-mode="B" role="button" tabindex="0" aria-pressed="false">LM vorgeben → Garzeit</div>
       </div>
+      <div class="status" id="status">Bereit.</div>
     </section>
 
     <section id="panelA" class="card">
@@ -142,12 +142,15 @@
     <section id="panelB" class="card" hidden>
       <div class="grid two">
         <div>
-          <label for="sauerteig">Sauerteig (g)</label>
-          <input id="sauerteig" type="number" min="0" step="1" value="75" inputmode="decimal" enterkeyhint="done">
+          <label for="lm">Lievito Madre (g)</label>
+          <input id="lm" type="number" min="0" step="1" value="75" inputmode="decimal" enterkeyhint="done">
+          <div class="hint">Die LM-Menge wird als 60 % Hydration interpretiert.</div>
         </div>
         <div>
-          <div class="pill" id="hydrationSplitB">Sauerteig: 62,5 % Mehl · 37,5 % Wasser</div>
-          <div class="notes" id="hydrationNote" style="margin-top:10px">Die Mehl- und Wasseranteile werden für die Hauptteig-Abzüge automatisch angepasst.</div>
+          <div class="pill">LM: 62,5 % Mehl · 37,5 % Wasser</div>
+          <div class="notes" style="margin-top:10px">
+            Daraus werden die Abzüge für den Hauptteig automatisch berechnet.
+          </div>
         </div>
       </div>
     </section>
@@ -158,7 +161,7 @@
         <div id="overnightOff" class="tap active" data-overnight="off" role="button" tabindex="0" aria-pressed="true">Aus</div>
         <div id="overnightOn" class="tap" data-overnight="on" role="button" tabindex="0" aria-pressed="false">Ein</div>
       </div>
-      <div id="overnightPanel" class="grid two" hidden style="margin-top:12px">
+      <div id="overnightPanel" class="grid two" style="margin-top:12px;display:none">
         <div>
           <label for="fridgeTemp">Kühlschranktemperatur (°C)</label>
           <div class="stepper">
@@ -166,14 +169,16 @@
             <input id="fridgeTemp" type="number" min="0" max="15" step="0.5" value="7" inputmode="decimal" enterkeyhint="done">
             <div class="tap step" data-action="fridge-up" role="button" tabindex="0" aria-label="Kühlschranktemperatur erhöhen">+</div>
           </div>
+          <div class="hint">Standard: 7 °C.</div>
         </div>
         <div>
           <label for="fridgeHours">Dauer im Kühlschrank (h)</label>
           <div class="stepper">
             <div class="tap step" data-action="fridgehours-down" role="button" tabindex="0" aria-label="Kühlschrankdauer verringern">−</div>
-            <input id="fridgeHours" type="number" min="0" max="48" step="1" value="10" inputmode="decimal" enterkeyhint="done">
+            <input id="fridgeHours" type="number" min="0" max="24" step="1" value="10" inputmode="decimal" enterkeyhint="done">
             <div class="tap step" data-action="fridgehours-up" role="button" tabindex="0" aria-label="Kühlschrankdauer erhöhen">+</div>
           </div>
+          <div class="hint">Die Kühlschrankzeit wird als Zusatz zur Gesamt-Reifezeit berücksichtigt. Schrittweite: 1 Stunde.</div>
         </div>
       </div>
     </section>
@@ -190,11 +195,7 @@
           <div class="v" id="outColdTime">–</div>
         </div>
         <div class="metric">
-          <div class="k">Gesamtdauer</div>
-          <div class="v" id="outTotalTime">–</div>
-        </div>
-        <div class="metric">
-          <div class="k" id="outMainLabel">Benötigte Sauerteig-Menge</div>
+          <div class="k" id="outMainLabel">Benötigte LM-Menge</div>
           <div class="v" id="outMain">–</div>
         </div>
         <div class="metric">
@@ -206,23 +207,22 @@
           <div class="v" id="outSide2">–</div>
         </div>
       </div>
-      <div class="notes" id="outNote" style="margin-top:12px">Die Seite berechnet automatisch bei jeder Eingabe.</div>
+      <div class="divider"></div>
+      <div class="notes" id="outNote">Die Seite berechnet automatisch bei jeder Eingabe.</div>
     </section>
 
-    <details class="card fold" id="assumptionsCard">
-      <summary>Annahmen</summary>
-      <div class="fold-body">
-        <div class="notes" id="assumptions">
-          <div>• Sauerteig-Hydration: 60 % → 62,5 % Mehl und 37,5 % Wasser.</div>
-          <div>• Temperaturkorrektur relativ zu 23 °C.</div>
-          <div>• Temperaturabhängigkeit umschaltbar: 5 °C / 7,5 °C / 10 °C pro Halbierung bzw. Verdopplung der Reifezeit.</div>
-          <div>• Kennlinie: 0,90 / 0,70 / 0,50 / 0,35 / 0,25 / 0,15 / 0,08 / 0,05 % Trockenhefe entsprechen 27 / 21 / 15 / 10,5 / 7,5 / 5 / 3,5 / 2,5 % Sauerteig bei 1 / 2 / 3 / 4,5 / 7 / 12 / 14 / 21 h.</div>
-          <div>• Übernachtgare: 2 h Abkühlphase, danach kalte Phase bei Kühlschranktemperatur und pauschal 0,5 h Rückerwärmung.</div>
-        </div>
+    <section class="card">
+      <p class="headline">Annahmen</p>
+      <div class="notes">
+        <div>• LM-Hydration: 60 % → 62,5 % Mehl und 37,5 % Wasser.</div>
+        <div>• Temperaturkorrektur relativ zu 23 °C.</div>
+        <div>• Temperaturabhängigkeit umschaltbar: 5 °C / 7,5 °C / 10 °C pro Halbierung bzw. Verdopplung der Reifezeit.</div>
+        <div>• Kennlinie: 0,90 / 0,70 / 0,50 / 0,35 / 0,25 / 0,15 / 0,08 / 0,05 % Trockenhefe entsprechen 27 / 21 / 15 / 10,5 / 7,5 / 5 / 3,5 / 2,5 % LM bei 1 / 2 / 3 / 4,5 / 7 / 12 / 14 / 21 h.</div>
+        <div>• Übernachtgare addiert die reale Kühlschrankzeit zur Gesamtdauer und zeigt zusätzlich eine 23-°C-Äquivalenz zur Orientierung.</div>
       </div>
-    </details>
+    </section>
 
-    <div class="footer">23 °C bleibt die Bezugstemperatur.</div>
+    <div class="footer">Übernachtgare ist jetzt enthalten; Feinschliff können wir als Nächstes angehen.</div>
   </main>
 
   <script>
@@ -230,48 +230,91 @@
       'use strict';
 
       const $ = (id) => document.getElementById(id);
-      const state = { mode: 'A', yeast: 'dry', tempFactor: 7.5, overnight: false };
+      const state = {
+        mode: 'A',
+        yeast: 'dry',
+        tempFactor: 7.5,
+        overnight: false,
+        lastTouchTs: 0
+      };
 
       const knots = {
         times: [1, 2, 3, 4.5, 7, 12, 14, 21],
-        sauerteigPct: [27, 21, 15, 10.5, 7.5, 5, 3.5, 2.5],
+        lmPct: [27, 21, 15, 10.5, 7.5, 5, 3.5, 2.5],
         yPct: [0.9, 0.7, 0.5, 0.35, 0.25, 0.15, 0.08, 0.05]
       };
+
       const baseTemp = 23;
+      const lmFlourFactor = 1 / 1.6;
+      const lmWaterFactor = 0.6 / 1.6;
 
-      function num(el, fallback){
-        const n = parseFloat(el.value.replace(',', '.'));
-        return Number.isFinite(n) ? n : fallback;
+      function clamp(n, min, max) {
+        return Math.min(max, Math.max(min, n));
       }
-      function clamp(n, min, max){ return Math.min(max, Math.max(min, n)); }
-      function fmt1(n){ return (Math.round(n * 10) / 10).toFixed(1).replace('.', ','); }
-      function fmt2(n){ return (Math.round(n * 100) / 100).toFixed(2).replace('.', ','); }
-      function grams(n){ return `${fmt1(n)} g`; }
-      function hours(n){ return `${fmt1(n)} h`; }
-      function percent(n){ return `${fmt2(n)} %`; }
-      function hydrationValue(){ return clamp(num($('hydration'), 60), 0, 200); }
-      function flourFactor(){ const h = hydrationValue() / 100; return 1 / (1 + h); }
-      function waterFactor(){ const h = hydrationValue() / 100; return h / (1 + h); }
 
-      function linInterp(x, xs, ys){
+      function fmt1(n) {
+        return (Math.round(n * 10) / 10).toFixed(1).replace('.', ',');
+      }
+
+      function fmt2(n) {
+        return (Math.round(n * 100) / 100).toFixed(2).replace('.', ',');
+      }
+
+      function grams(n) {
+        return `${fmt1(n)} g`;
+      }
+
+      function percent(n) {
+        return `${fmt2(n)} %`;
+      }
+
+      function hours(n) {
+        return `${fmt1(n)} h`;
+      }
+
+      function num(el, fallback) {
+        const v = parseFloat(String(el.value).replace(',', '.'));
+        return Number.isFinite(v) ? v : fallback;
+      }
+
+      function linInterp(x, xs, ys) {
         if (x <= xs[0]) return ys[0];
         if (x >= xs[xs.length - 1]) return ys[ys.length - 1];
-        for (let i = 0; i < xs.length - 1; i++) {
-          if (x >= xs[i] && x <= xs[i + 1]) {
-            const t = (x - xs[i]) / (xs[i + 1] - xs[i]);
+        for (let i = 0; i < xs.length - 1; i += 1) {
+          const x0 = xs[i], x1 = xs[i + 1];
+          if (x >= x0 && x <= x1) {
+            const t = (x - x0) / (x1 - x0);
             return ys[i] + t * (ys[i + 1] - ys[i]);
           }
         }
         return ys[ys.length - 1];
       }
-      function timeFromSauerteigPct(p){ return linInterp(p, [...knots.sauerteigPct].reverse(), [...knots.times].reverse()); }
-      function timeFromYeastPct(p){ return linInterp(p, [...knots.yPct].reverse(), [...knots.times].reverse()); }
-      function sauerteigPctFromTime(t){ return linInterp(t, knots.times, knots.sauerteigPct); }
-      function yeastPctFromTime(t){ return linInterp(t, knots.times, knots.yPct); }
-      function rateAtTemp(temp){ return Math.pow(2, (temp - baseTemp) / state.tempFactor); }
-      function scaleTimeToTemp(timeAt23, temp){ return timeAt23 / rateAtTemp(temp); }
 
-      function syncModeUI(){
+      function timeFromLMpct(p) {
+        return linInterp(p, [...knots.lmPct].reverse(), [...knots.times].reverse());
+      }
+
+      function timeFromYeastPct(p) {
+        return linInterp(p, [...knots.yPct].reverse(), [...knots.times].reverse());
+      }
+
+      function lmPctFromTime(t) {
+        return linInterp(t, knots.times, knots.lmPct);
+      }
+
+      function yeastPctFromTime(t) {
+        return linInterp(t, knots.times, knots.yPct);
+      }
+
+      function scaleTimeToTemp(timeAt23, temp) {
+        return timeAt23 * Math.pow(2, (baseTemp - temp) / state.tempFactor);
+      }
+
+      function setStatus(text) {
+        $('status').textContent = text;
+      }
+
+      function syncModeUI() {
         const a = state.mode === 'A';
         $('modeA').classList.toggle('active', a);
         $('modeB').classList.toggle('active', !a);
@@ -280,181 +323,226 @@
         $('panelA').hidden = !a;
         $('panelB').hidden = a;
       }
-      function syncYeastUI(){
+
+      function syncYeastUI() {
         const dry = state.yeast === 'dry';
         $('yeastDry').classList.toggle('active', dry);
         $('yeastFresh').classList.toggle('active', !dry);
         $('yeastDry').setAttribute('aria-pressed', String(dry));
         $('yeastFresh').setAttribute('aria-pressed', String(!dry));
       }
-      function syncTempFactorUI(){
-        ['5','7.5','10'].forEach((v) => {
-          const on = parseFloat(v) === state.tempFactor;
-          const id = v === '7.5' ? 'tempFactor75' : `tempFactor${v}`;
-          $(id).classList.toggle('active', on);
-          $(id).setAttribute('aria-pressed', String(on));
+
+      function syncTempFactorUI() {
+        const val = String(state.tempFactor);
+        ['5', '7.5', '10'].forEach((v) => {
+          const el = $('tempFactor' + v.replace('.', ''));
+          const active = v === val;
+          el.classList.toggle('active', active);
+          el.setAttribute('aria-pressed', String(active));
         });
       }
-      function syncOvernightUI(){
+
+      function syncOvernightUI() {
         $('overnightOff').classList.toggle('active', !state.overnight);
         $('overnightOn').classList.toggle('active', state.overnight);
         $('overnightOff').setAttribute('aria-pressed', String(!state.overnight));
         $('overnightOn').setAttribute('aria-pressed', String(state.overnight));
-        $('overnightPanel').hidden = !state.overnight;
+        $('overnightPanel').style.display = state.overnight ? 'grid' : 'none';
       }
-      function updateHydrationLabels(){
-        const flourPct = flourFactor() * 100;
-        const waterPct = waterFactor() * 100;
-        const text = `Sauerteig: ${fmt1(flourPct)} % Mehl · ${fmt1(waterPct)} % Wasser`;
-        $('hydrationSplit').textContent = text;
-        $('hydrationSplitB').textContent = text;
-        $('hydrationNote').textContent = 'Die Mehl- und Wasseranteile werden für die Hauptteig-Abzüge automatisch angepasst.';
-        $('assumptions').firstElementChild.textContent = `• Sauerteig-Hydration: ${fmt1(hydrationValue())} % → ${fmt1(flourPct)} % Mehl und ${fmt1(waterPct)} % Wasser.`;
-      }
-      function overnightContributionAt23(){
-        if (!state.overnight) return { coldReal: 0, eq23: 0 };
-        const fridgeHours = clamp(num($('fridgeHours'), 10), 0, 48);
-        const fridgeTemp = clamp(num($('fridgeTemp'), 7), 0, 15);
-        if (fridgeHours <= 0) return { coldReal: 0, eq23: 0 };
-        const temp = clamp(num($('temp'), 23), 18, 35);
-        const coolHours = Math.min(2, fridgeHours);
-        const holdHours = Math.max(0, fridgeHours - coolHours);
-        const avgCoolTemp = (temp + fridgeTemp) / 2;
-        const coolEq23 = coolHours * rateAtTemp(avgCoolTemp);
-        const coldEq23 = holdHours * rateAtTemp(fridgeTemp);
-        const rewarmEq23 = 0.5 * rateAtTemp(temp);
-        return { coldReal: fridgeHours, eq23: coolEq23 + coldEq23 + rewarmEq23 };
-      }
-      function setMetric(id, value){ $(id).textContent = value; }
 
-      function compute(){
-        const mehl = Math.max(0, num($('mehl'), 1000));
-        const temp = clamp(num($('temp'), 23), 18, 35);
-        $('temp').value = String(temp);
-        $('mehl').value = mehl > 0 ? String(Math.round(mehl * 10) / 10) : '';
-        $('hydration').value = String(hydrationValue());
-        const ovn = overnightContributionAt23();
+      function applyOvernight(time23, temp) {
+        const warmDisplayed = scaleTimeToTemp(time23, temp);
 
-        let warmAt23 = 0;
-        let warmReal = 0;
-        let mainValue = '–';
-        let side1 = '–';
-        let side2 = '–';
-        let note = 'Die Seite berechnet automatisch bei jeder Eingabe.';
-
-        if (state.mode === 'A') {
-          const hefe = Math.max(0, num($('hefe'), 1.5));
-          const dryHefe = state.yeast === 'dry' ? hefe : hefe / 3;
-          const yeastPct = mehl > 0 ? (dryHefe / mehl) * 100 : 0;
-          const totalAt23 = timeFromYeastPct(yeastPct || knots.yPct[0]);
-          warmAt23 = Math.max(0, totalAt23 - ovn.eq23);
-          warmReal = scaleTimeToTemp(warmAt23, temp);
-          const sauerteigPct = sauerteigPctFromTime(totalAt23);
-          const sauerteigG = mehl * sauerteigPct / 100;
-          const flourG = sauerteigG * flourFactor();
-          const waterG = sauerteigG * waterFactor();
-          mainValue = grams(sauerteigG);
-          side1 = grams(flourG);
-          side2 = grams(waterG);
-          note = `Aus ${grams(hefe)} ${state.yeast === 'dry' ? 'Trockenhefe' : 'Frischhefe'} werden ${grams(sauerteigG)} Sauerteig. Das entspricht ${percent(sauerteigPct)} bezogen auf das Gesamtmehl.`;
-          $('outMainLabel').textContent = 'Benötigte Sauerteig-Menge';
-          $('outSide1Label').textContent = 'Weglassen Mehl';
-          $('outSide2Label').textContent = 'Weglassen Wasser';
-        } else {
-          const sauerteigG = Math.max(0, num($('sauerteig'), 75));
-          const sauerteigPct = mehl > 0 ? (sauerteigG / mehl) * 100 : 0;
-          const totalAt23 = timeFromSauerteigPct(sauerteigPct || knots.sauerteigPct[knots.sauerteigPct.length - 1]);
-          warmAt23 = Math.max(0, totalAt23 - ovn.eq23);
-          warmReal = scaleTimeToTemp(warmAt23, temp);
-          const flourG = sauerteigG * flourFactor();
-          const waterG = sauerteigG * waterFactor();
-          const yeastPct = yeastPctFromTime(totalAt23);
-          const dryEq = mehl * yeastPct / 100;
-          const freshEq = dryEq * 3;
-          mainValue = hours(scaleTimeToTemp(totalAt23, temp));
-          side1 = grams(flourG);
-          side2 = grams(waterG);
-          note = `${grams(sauerteigG)} Sauerteig entsprechen ungefähr ${grams(dryEq)} Trockenhefe bzw. ${grams(freshEq)} Frischhefe. Der Sauerteig-Anteil liegt bei ${percent(sauerteigPct)} bezogen auf das Gesamtmehl.`;
-          $('outMainLabel').textContent = 'Geschätzte Garzeit bei Teigtemperatur';
-          $('outSide1Label').textContent = 'Enthaltenes Mehl';
-          $('outSide2Label').textContent = 'Enthaltenes Wasser';
+        if (!state.overnight) {
+          return {
+            warmDisplayed,
+            coldDisplayed: 0,
+            totalDisplayed: warmDisplayed,
+            note: `Gesamtdauer: ${hours(warmDisplayed)} bei Raumtemperatur.`
+          };
         }
 
-        const coldReal = ovn.coldReal;
-        const totalReal = warmReal + coldReal;
-        setMetric('outWarmTime', hours(warmReal));
-        setMetric('outColdTime', coldReal > 0 ? hours(coldReal) : '0,0 h');
-        setMetric('outTotalTime', hours(totalReal));
-        setMetric('outMain', mainValue);
-        setMetric('outSide1', side1);
-        setMetric('outSide2', side2);
-        $('outNote').textContent = state.overnight
-          ? `${note} Davon entfallen ${hours(warmReal)} auf Raumtemperatur und ${hours(coldReal)} auf den Kühlschrank.`
-          : `${note} Ohne Übernachtgare entspricht die Gesamtdauer der Raumtemperatur-Gare.`;
+        const fridgeTemp = clamp(num($('fridgeTemp'), 7), 0, 15);
+        const fridgeHours = clamp(num($('fridgeHours'), 0), 0, 24);
+        $('fridgeTemp').value = String(fridgeTemp);
+        $('fridgeHours').value = String(fridgeHours);
+
+        const fridgeEquivalentAt23 = fridgeHours * Math.pow(2, (baseTemp - fridgeTemp) / state.tempFactor);
+        const totalDisplayed = warmDisplayed + fridgeHours;
+        const note = `Übernachtgare aktiv: ${hours(warmDisplayed)} Raumtemperatur plus ${hours(fridgeHours)} bei ${fmt1(fridgeTemp)} °C im Kühlschrank. Zur Orientierung entspricht die Kühlschrankphase ungefähr ${hours(fridgeEquivalentAt23)} bei 23 °C. Gesamtdauer: ${hours(totalDisplayed)}.`;
+        return { warmDisplayed, coldDisplayed: fridgeHours, totalDisplayed, note };
       }
 
-      function bump(id, delta, min, max, step){
-        const el = $(id);
-        const value = clamp(num(el, 0) + delta * step, min, max);
-        el.value = Number.isInteger(step) ? String(Math.round(value)) : String(Math.round(value * 10) / 10);
-        if (id === 'hydration') updateHydrationLabels();
+      function computeFromYeast(flour, temp) {
+        const yeastG = Math.max(0, num($('hefe'), 0));
+        const dryYeastG = state.yeast === 'dry' ? yeastG : yeastG / 3;
+        const freshYeastG = state.yeast === 'fresh' ? yeastG : yeastG * 3;
+        const yeastPct = dryYeastG / flour * 100;
+        const boundedYeastPct = clamp(yeastPct, 0.05, 0.9);
+        const time23 = timeFromYeastPct(boundedYeastPct);
+        const overnightInfo = applyOvernight(time23, temp);
+        const lmPct = lmPctFromTime(time23);
+        const lmG = flour * lmPct / 100;
+        const omitFlour = lmG * lmFlourFactor;
+        const omitWater = lmG * lmWaterFactor;
+
+        $('outWarmTime').textContent = hours(overnightInfo.warmDisplayed);
+        $('outColdTime').textContent = hours(overnightInfo.coldDisplayed);
+        $('outMainLabel').textContent = 'Benötigte LM-Menge';
+        $('outMain').textContent = `${grams(lmG)} · ${percent(lmPct)}`;
+        $('outSide1Label').textContent = 'Weglassen Mehl';
+        $('outSide1').textContent = grams(omitFlour);
+        $('outSide2Label').textContent = 'Weglassen Wasser';
+        $('outSide2').textContent = grams(omitWater);
+        $('outNote').textContent = `Aus ${grams(state.yeast === 'dry' ? dryYeastG : freshYeastG)} ${state.yeast === 'dry' ? 'Trockenhefe' : 'Frischhefe'} ergibt sich rechnerisch ${percent(yeastPct)} Trockenhefe bezogen auf ${fmt1(flour)} g Mehl. LM wird mit 60 % Hydration auf Mehl und Wasser aufgeteilt.${overnightInfo.note ? ' ' + overnightInfo.note : ''}`;
+        setStatus(`Rezept mit Hefe → LM aktualisiert · Temperaturfaktor ${String(state.tempFactor).replace('.', ',')} °C.`);
+      }
+
+      function computeFromLM(flour, temp) {
+        const lmG = Math.max(0, num($('lm'), 0));
+        const lmPct = lmG / flour * 100;
+        const boundedLmPct = clamp(lmPct, 2.5, 27);
+        const time23 = timeFromLMpct(boundedLmPct);
+        const overnightInfo = applyOvernight(time23, temp);
+        const omitFlour = lmG * lmFlourFactor;
+        const omitWater = lmG * lmWaterFactor;
+        const dryYeastPct = yeastPctFromTime(time23);
+        const dryYeastG = flour * dryYeastPct / 100;
+        const freshYeastG = dryYeastG * 3;
+
+        $('outWarmTime').textContent = hours(overnightInfo.warmDisplayed);
+        $('outColdTime').textContent = hours(overnightInfo.coldDisplayed);
+        $('outMainLabel').textContent = 'Hefe-Äquivalent';
+        $('outMain').textContent = `${grams(dryYeastG)} Trockenhefe · ${grams(freshYeastG)} Frischhefe`;
+        $('outSide1Label').textContent = 'Im LM enthaltenes Mehl';
+        $('outSide1').textContent = grams(omitFlour);
+        $('outSide2Label').textContent = 'Im LM enthaltenes Wasser';
+        $('outSide2').textContent = grams(omitWater);
+        $('outNote').textContent = `Die vorgegebene LM-Menge entspricht ${percent(lmPct)} bezogen auf ${fmt1(flour)} g Mehl. Daraus wird die Garzeit geschätzt; gleichzeitig siehst du, welche Mehl- und Wassermengen im Hauptteig entfallen.${overnightInfo.note ? ' ' + overnightInfo.note : ''}`;
+        setStatus(`LM vorgeben → Garzeit aktualisiert · Temperaturfaktor ${String(state.tempFactor).replace('.', ',')} °C.`);
+      }
+
+      function compute() {
+        const flour = Math.max(1, num($('mehl'), 1000));
+        const temp = clamp(num($('temp'), 23), 18, 35);
+        $('temp').value = String(temp);
+
+        if (state.mode === 'A') {
+          computeFromYeast(flour, temp);
+        } else {
+          computeFromLM(flour, temp);
+        }
+      }
+
+      function adjustTemp(delta) {
+        const current = clamp(num($('temp'), 23), 18, 35);
+        $('temp').value = String(clamp(current + delta, 18, 35));
         compute();
       }
-      function activateTap(el){
+
+      function handleTap(target) {
+        const el = target.closest('.tap');
+        if (!el) return false;
+
         const mode = el.dataset.mode;
         const yeast = el.dataset.yeast;
-        const tempfactor = el.dataset.tempfactor;
-        const overnight = el.dataset.overnight;
         const action = el.dataset.action;
+        const tempFactor = el.dataset.tempfactor;
+        const overnight = el.dataset.overnight;
 
-        if (mode) { state.mode = mode; syncModeUI(); compute(); return; }
-        if (yeast) { state.yeast = yeast; syncYeastUI(); compute(); return; }
-        if (tempfactor) { state.tempFactor = parseFloat(tempfactor); syncTempFactorUI(); compute(); return; }
-        if (overnight) { state.overnight = overnight === 'on'; syncOvernightUI(); compute(); return; }
-        if (action === 'temp-down') return bump('temp', -1, 18, 35, 1);
-        if (action === 'temp-up') return bump('temp', 1, 18, 35, 1);
-        if (action === 'hydration-down') return bump('hydration', -1, 0, 200, 10);
-        if (action === 'hydration-up') return bump('hydration', 1, 0, 200, 10);
-        if (action === 'fridge-down') return bump('fridgeTemp', -1, 0, 15, 0.5);
-        if (action === 'fridge-up') return bump('fridgeTemp', 1, 0, 15, 0.5);
-        if (action === 'fridgehours-down') return bump('fridgeHours', -1, 0, 48, 1);
-        if (action === 'fridgehours-up') return bump('fridgeHours', 1, 0, 48, 1);
+        if (mode) {
+          state.mode = mode;
+          syncModeUI();
+          compute();
+          return true;
+        }
+        if (yeast) {
+          state.yeast = yeast;
+          syncYeastUI();
+          compute();
+          return true;
+        }
+        if (tempFactor) {
+          state.tempFactor = parseFloat(tempFactor);
+          syncTempFactorUI();
+          compute();
+          return true;
+        }
+        if (overnight) {
+          state.overnight = overnight === 'on';
+          syncOvernightUI();
+          compute();
+          return true;
+        }
+        if (action === 'temp-down') {
+          adjustTemp(-1);
+          return true;
+        }
+        if (action === 'temp-up') {
+          adjustTemp(1);
+          return true;
+        }
+        if (action === 'fridge-down') {
+          const current = clamp(num($('fridgeTemp'), 7), 0, 15);
+          $('fridgeTemp').value = String(Math.max(0, Math.round((current - 0.5) * 2) / 2));
+          compute();
+          return true;
+        }
+        if (action === 'fridge-up') {
+          const current = clamp(num($('fridgeTemp'), 7), 0, 15);
+          $('fridgeTemp').value = String(Math.min(15, Math.round((current + 0.5) * 2) / 2));
+          compute();
+          return true;
+        }
+        if (action === 'fridgehours-down') {
+          const current = clamp(num($('fridgeHours'), 10), 0, 24);
+          $('fridgeHours').value = String(Math.max(0, Math.round(current - 1)));
+          compute();
+          return true;
+        }
+        if (action === 'fridgehours-up') {
+          const current = clamp(num($('fridgeHours'), 10), 0, 24);
+          $('fridgeHours').value = String(Math.min(24, Math.round(current + 1)));
+          compute();
+          return true;
+        }
+        return false;
       }
 
-      document.querySelectorAll('.tap').forEach((el) => {
-        el.addEventListener('click', () => activateTap(el));
-        el.addEventListener('keydown', (ev) => {
-          if (ev.key === 'Enter' || ev.key === ' ') {
-            ev.preventDefault();
-            activateTap(el);
-          }
-        });
-      });
-      ['mehl','temp','hydration','hefe','sauerteig','fridgeTemp','fridgeHours'].forEach((id) => {
-        $(id).addEventListener('input', () => { if (id === 'hydration') updateHydrationLabels(); compute(); });
-        $(id).addEventListener('change', () => { if (id === 'hydration') updateHydrationLabels(); compute(); });
+      document.addEventListener('touchend', (ev) => {
+        state.lastTouchTs = Date.now();
+        if (handleTap(ev.target)) ev.preventDefault();
+      }, { passive: false });
+
+      document.addEventListener('click', (ev) => {
+        if (Date.now() - state.lastTouchTs < 450) return;
+        if (handleTap(ev.target)) ev.preventDefault();
       });
 
-      $('tempCard').open = false;
-      $('assumptionsCard').open = false;
+      document.addEventListener('keydown', (ev) => {
+        if ((ev.key === 'Enter' || ev.key === ' ') && handleTap(ev.target)) {
+          ev.preventDefault();
+        }
+      });
+
+      ['mehl', 'temp', 'hefe', 'lm', 'fridgeTemp', 'fridgeHours'].forEach((id) => {
+        $(id).addEventListener('input', compute);
+        $(id).addEventListener('change', compute);
+      });
+
       syncModeUI();
       syncYeastUI();
       syncTempFactorUI();
       syncOvernightUI();
-      updateHydrationLabels();
       compute();
 
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', async () => {
-          try {
-            const regs = await navigator.serviceWorker.getRegistrations();
-            await Promise.all(regs.map(r => r.unregister()));
-            const keys = await caches.keys();
-            await Promise.all(keys.filter(k => k.startsWith('lm-hefe-') || k.startsWith('sauerteig-hefe-')).map(k => caches.delete(k)));
-          } catch (err) {
-            console.warn('Service Worker cleanup failed:', err);
-          }
-        });
+        navigator.serviceWorker.getRegistrations()
+          .then((registrations) => Promise.all(registrations.map((r) => r.unregister())))
+          .catch(() => {});
+        if ('caches' in window) {
+          caches.keys().then((keys) => Promise.all(keys.map((k) => caches.delete(k)))).catch(() => {});
+        }
       }
     })();
   </script>
