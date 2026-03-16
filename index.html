@@ -133,8 +133,8 @@
     <section class="card">
       <p class="headline">Berechnungsmodus</p>
       <div class="seg">
-        <div id="modeA" class="tap active" data-mode="A" role="button" tabindex="0" aria-pressed="true">Rezept mit Hefe → Sauerteig</div>
-        <div id="modeB" class="tap" data-mode="B" role="button" tabindex="0" aria-pressed="false">Sauerteig vorgeben → Garzeit</div>
+        <div id="modeB" class="tap active" data-mode="B" role="button" tabindex="0" aria-pressed="true">Sauerteig vorgeben → Garzeit</div>
+        <div id="modeA" class="tap" data-mode="A" role="button" tabindex="0" aria-pressed="false">Rezept mit Hefe → Sauerteig</div>
       </div>
     </section>
 
@@ -149,7 +149,7 @@
         </div>
         <div>
           <label for="hefe">Hefemenge (g)</label>
-          <input id="hefe" type="number" min="0" step="0.1" value="1.5" inputmode="decimal" enterkeyhint="done">
+          <input id="hefe" type="number" min="0" step="0.1" value="3" inputmode="decimal" enterkeyhint="done">
           <div class="hint">3 g Frischhefe ≈ 1 g Trockenhefe.</div>
         </div>
       </div>
@@ -159,7 +159,7 @@
       <div class="grid two">
         <div>
           <label for="lm">Sauerteig (g)</label>
-          <input id="lm" type="number" min="0" step="1" value="75" inputmode="decimal" enterkeyhint="done">
+          <input id="lm" type="number" min="0" step="1" value="160" inputmode="decimal" enterkeyhint="done">
         </div>
         <div>
           <div class="notes" id="stCompositionNote">Im Sauerteig enthalten: 46,9 g Mehl · 28,1 g Wasser</div>
@@ -170,10 +170,10 @@
     <section class="card">
       <p class="headline">Übernachtgare</p>
       <div class="seg">
-        <div id="overnightOff" class="tap active" data-overnight="off" role="button" tabindex="0" aria-pressed="true">Aus</div>
-        <div id="overnightOn" class="tap" data-overnight="on" role="button" tabindex="0" aria-pressed="false">Ein</div>
+        <div id="overnightOff" class="tap" data-overnight="off" role="button" tabindex="0" aria-pressed="false">Aus</div>
+        <div id="overnightOn" class="tap active" data-overnight="on" role="button" tabindex="0" aria-pressed="true">Ein</div>
       </div>
-      <div id="overnightPanel" class="grid two" style="display:none; margin-top:12px">
+      <div id="overnightPanel" class="grid two" style="display:grid; margin-top:12px">
         <div>
           <label for="fridgeTemp">Kühlschranktemperatur (°C)</label>
           <div class="stepper">
@@ -241,10 +241,10 @@
 
       const $ = (id) => document.getElementById(id);
       const state = {
-        mode: 'A',
+        mode: 'B',
         yeast: 'dry',
         tempFactor: 5,
-        overnight: false,
+        overnight: true,
         lastTouchTs: 0
       };
 
@@ -311,7 +311,7 @@
         const flourFrac = stFlourFactor();
         const waterFrac = stWaterFactor();
         $('hydrationBreakdown').textContent = `${fmt1(flourFrac * 100)} % Mehl · ${fmt1(waterFrac * 100)} % Wasser`;
-        const st = Math.max(0, num($('lm'), 75));
+        const st = Math.max(0, num($('lm'), 160));
         $('stCompositionNote').textContent = `Im Sauerteig enthalten: ${grams(st * flourFrac)} Mehl · ${grams(st * waterFrac)} Wasser`;
       }
 
