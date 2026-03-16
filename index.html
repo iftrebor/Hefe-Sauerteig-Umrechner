@@ -352,13 +352,13 @@
       }
 
       function applyOvernight(time23, temp) {
-        const warmDisplayed = scaleTimeToTemp(time23, temp);
+        const warmDisplayedNoCold = scaleTimeToTemp(time23, temp);
         if (!state.overnight) {
           return {
-            warmDisplayed,
+            warmDisplayed: warmDisplayedNoCold,
             coldDisplayed: 0,
-            totalDisplayed: warmDisplayed,
-            note: `Gesamtdauer: ${hours(warmDisplayed)} bei Raumtemperatur.`
+            totalDisplayed: warmDisplayedNoCold,
+            note: `Gesamtdauer: ${hours(warmDisplayedNoCold)} bei Raumtemperatur.`
           };
         }
 
@@ -367,9 +367,11 @@
         $('fridgeTemp').value = String(fridgeTemp);
         $('fridgeHours').value = String(Math.round(fridgeHours));
 
-        const fridgeEquivalentAt23 = fridgeHours * Math.pow(2, (baseTemp - fridgeTemp) / state.tempFactor);
+        const fridgeEquivalentAt23 = fridgeHours * Math.pow(2, (fridgeTemp - baseTemp) / state.tempFactor);
+        const remainingAt23 = Math.max(0, time23 - fridgeEquivalentAt23);
+        const warmDisplayed = scaleTimeToTemp(remainingAt23, temp);
         const totalDisplayed = warmDisplayed + fridgeHours;
-        const note = `Übernachtgare aktiv: ${hours(warmDisplayed)} Raumtemperatur plus ${hours(fridgeHours)} bei ${fmt1(fridgeTemp)} °C im Kühlschrank. Zur Orientierung entspricht die Kühlschrankphase ungefähr ${hours(fridgeEquivalentAt23)} bei 23 °C. Gesamtdauer: ${hours(totalDisplayed)}.`;
+        const note = `Übernachtgare aktiv: ${hours(fridgeHours)} bei ${fmt1(fridgeTemp)} °C im Kühlschrank zählen ungefähr wie ${hours(fridgeEquivalentAt23)} bei 23 °C. Verbleibende Gare bei Raumtemperatur: ${hours(warmDisplayed)}. Gesamtdauer: ${hours(totalDisplayed)}.`;
         return { warmDisplayed, coldDisplayed: fridgeHours, totalDisplayed, note };
       }
 
